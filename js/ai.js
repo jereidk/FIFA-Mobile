@@ -587,7 +587,7 @@ class AIController {
         }
         
         const direction = this.side === 'home' ? 1 : -1;
-        const space = this.team.findSpace(ball);
+        const space = this.team.findSpace(ballOwner);
         return { x: player.x + direction * 50, y: space.y };
     }
 
