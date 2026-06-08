@@ -202,17 +202,28 @@ class Ball {
     checkPostHit() {
         const goalTop = (this.fieldHeight - this.goalWidth) / 2;
         const goalBottom = (this.fieldHeight + this.goalWidth) / 2;
-        const goalLine = this.fieldWidth - 20;
         
-        // Poste superior
-        if (this.y < goalTop + 10 && this.y > goalTop - 10 && this.x > goalLine - 20) {
+        // Check left goal posts
+        const leftGoalLine = 20;
+        if (this.y < goalTop + 10 && this.y > goalTop - 10 && this.x < leftGoalLine + 20 && this.x > leftGoalLine - 20) {
             this.vy = Math.abs(this.vy) * this.bounceCoeff;
             this.playPostSound();
             return true;
         }
+        if (this.y > goalBottom - 10 && this.y < goalBottom + 10 && this.x < leftGoalLine + 20 && this.x > leftGoalLine - 20) {
+            this.vy = -Math.abs(this.vy) * this.bounceCoeff;
+            this.playPostSound();
+            return true;
+        }
         
-        // Poste inferior
-        if (this.y > goalBottom - 10 && this.y < goalBottom + 10 && this.x > goalLine - 20) {
+        // Check right goal posts
+        const rightGoalLine = this.fieldWidth - 20;
+        if (this.y < goalTop + 10 && this.y > goalTop - 10 && this.x > rightGoalLine - 20) {
+            this.vy = Math.abs(this.vy) * this.bounceCoeff;
+            this.playPostSound();
+            return true;
+        }
+        if (this.y > goalBottom - 10 && this.y < goalBottom + 10 && this.x > rightGoalLine - 20) {
             this.vy = -Math.abs(this.vy) * this.bounceCoeff;
             this.playPostSound();
             return true;
@@ -224,13 +235,13 @@ class Ball {
     playHitSound() {
         const now = Date.now();
         if (now - this.lastHitTime > 50) {
-            window.audioManager.playSound('kick');
+            window.audioManager?.playSound('kick');
             this.lastHitTime = now;
         }
     }
 
     playPostSound() {
-        window.audioManager.playSound('post');
+        window.audioManager?.playSound('post');
     }
 
     shoot(power, targetX, targetY, height = 0) {

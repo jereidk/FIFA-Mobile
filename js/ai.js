@@ -120,11 +120,11 @@ class AIController {
         let targetX = this.team.side === 'home' ? 30 : fieldWidth - 30;
         let targetY = goalCenterY;
         
-        // Si el balón está lejos, reposicionarse
+        // Si el balón está lejos, reposicionarse (pero el portero NO sale del área)
         if (ball.x > 400 && ball.x < 800) {
-            // Balón en campo medio - salir un poco
-            targetX = this.team.side === 'home' ? 50 : fieldWidth - 50;
-            targetY = ball.y * 0.4 + goalCenterY * 0.6;
+            // Balón en campo medio - reposicionarse pero el portero se queda
+            targetX = this.team.side === 'home' ? 30 : fieldWidth - 30;
+            targetY = ball.y * 0.3 + goalCenterY * 0.7;
         } else if (ball.x > 700) {
             // Balón acercándose a nuestra portería
             const dangerLevel = (ball.x - 700) / 500;
@@ -242,7 +242,10 @@ class AIController {
 
     markOpponent(player, ball, homeTeam) {
         // Encontrar el oponente más peligroso a marcar
-        if (!this.markingTarget || this.markingTarget !== ball.owner) {
+        if (!ball.owner) {
+            // Balón libre - no marcar a nadie
+            this.markingTarget = null;
+        } else if (!this.markingTarget || this.markingTarget !== ball.owner) {
             this.markingTarget = ball.owner;
         }
         
