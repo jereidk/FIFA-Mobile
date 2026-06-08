@@ -30,18 +30,23 @@ class AndroidControls {
     }
 
     detectMobile() {
+        // También detectar si hay una pantalla táctil disponible
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                ('ontouchstart' in window) ||
-               (navigator.maxTouchPoints > 0);
+               (navigator.maxTouchPoints > 0) ||
+               window.matchMedia('(pointer: coarse)').matches;
     }
 
     init() {
-        if (!this.isMobile) return;
+        // Siempre habilitar los controles para poder probarlos
+        // En producción, descomentar la siguiente línea:
+        // if (!this.isMobile) return;
         
         this.enableControls();
         this.setupJoystick();
         this.setupButtons();
         this.setupTouchDetection();
+        this.preventScroll();
         
         console.log('📱 Android controls initialized');
     }
@@ -81,23 +86,43 @@ class AndroidControls {
         this.joystick.baseX = rect.left + rect.width / 2;
         this.joystick.baseY = rect.top + rect.height / 2;
         
-        // Touch start
+        // Touch events para móvil
         joystickBase.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.startJoystick(e.touches[0]);
         }, { passive: false });
         
-        // Touch move
         joystickBase.addEventListener('touchmove', (e) => {
             e.preventDefault();
             this.moveJoystick(e.touches[0]);
         }, { passive: false });
         
-        // Touch end
         joystickBase.addEventListener('touchend', (e) => {
             e.preventDefault();
             this.endJoystick();
         }, { passive: false });
+        
+        // Mouse events para desktop
+        let mouseDown = false;
+        
+        joystickBase.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            mouseDown = true;
+            this.startJoystick(e);
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (mouseDown) {
+                this.moveJoystick(e);
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (mouseDown) {
+                mouseDown = false;
+                this.endJoystick();
+            }
+        });
         
         // También para la zona completa del joystick
         const joystickZone = document.getElementById('joystick-zone');
@@ -175,25 +200,61 @@ class AndroidControls {
         this.buttons.pass = document.getElementById('btn-pass');
         this.buttons.dribble = document.getElementById('btn-dribble');
         
+        // Configurar botón de tiro
         if (this.buttons.shoot) {
+            // Touch events
             this.buttons.shoot.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 this.onShoot();
+                this.flashButton(this.buttons.shoot);
             }, { passive: false });
+            
+            // Mouse click (para desktop)
+            this.buttons.shoot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.onShoot();
+                this.flashButton(this.buttons.shoot);
+            });
+            
+            // Prevenir doble ejecución
+            this.buttons.shoot.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
         }
         
+        // Configurar botón de pase
         if (this.buttons.pass) {
             this.buttons.pass.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 this.onPass();
+                this.flashButton(this.buttons.pass);
             }, { passive: false });
+            
+            this.buttons.pass.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.onPass();
+                this.flashButton(this.buttons.pass);
+            });
+            
+            this.buttons.pass.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
         }
         
+        // Configurar botón de dribling
         if (this.buttons.dribble) {
             this.buttons.dribble.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 this.onDribble();
+                this.flashButton(this.buttons.dribble);
             }, { passive: false });
+            
+            this.buttons.dribble.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.onDribble();
+                this.flashButton(this.buttons.dribble);
+            });
+            
+            this.buttons.dribble.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
         }
     }
 
@@ -212,18 +273,21 @@ class AndroidControls {
         const player = this.game.homeTeam.controlledPlayer;
         if (!player || !player.hasBall) return;
         
-        // Shoot towards the goal
+        // Shoot hacia la portería contraria
         const targetX = this.game.homeTeam.side === 'home' ? 1200 : 0;
-        const targetY = 350;
+        const goalCenterY = 350;
         
-        // Add offset based on joystick position
-        const targetYWithOffset = targetY + (this.joystick.dy * 50);
+        // Añadir offset basado en posición del joystick
+        const targetY = goalCenterY + (this.joystick.dy * 60);
         
-        player.shoot(targetX, targetYWithOffset, this.game.ball);
+        // Añadir curva basada en joystick horizontal
+        const curve = this.joystick.dx * 2;
+        
+        // Disparar con altura si el joystick está hacia arriba
+        const height = this.joystick.dy < -0.3 ? 15 : 0;
+        
+        player.shoot(targetX, targetY, this.game.ball, height, curve);
         this.game.showAction('¡DISPARO!');
-        
-        // Efecto visual en el botón
-        this.flashButton(this.buttons.shoot);
     }
 
     onPass() {
@@ -237,7 +301,9 @@ class AndroidControls {
         if (target) {
             player.pass(target, this.game.ball);
             this.game.showAction('PASE');
-            this.flashButton(this.buttons.pass);
+        } else {
+            // Si no hay compañero disponible, driblar
+            this.onDribble();
         }
     }
 
@@ -277,15 +343,21 @@ class AndroidControls {
     update() {
         if (!this.enabled || !this.joystick.active) return;
         
-        // Enviar input al juego
+        // Enviar input al juego usando el sistema de aceleración
         const input = this.getMovementInput();
         
         if (this.game && this.game.homeTeam && this.game.homeTeam.controlledPlayer) {
             const player = this.game.homeTeam.controlledPlayer;
             
-            // Convertir input del joystick a velocidad del jugador
-            player.vx = input.x * player.speed * 1.5;
-            player.vy = input.y * player.speed * 1.5;
+            // Convertir input del joystick a velocidad objetivo (usa el sistema de aceleración)
+            player.targetVx = input.x * player.speed * 1.5;
+            player.targetVy = input.y * player.speed * 1.5;
+            
+            // Sprint si joystick está muy inclinado
+            if (Math.sqrt(input.x * input.x + input.y * input.y) > 0.7 && player.stamina > 20) {
+                player.targetVx *= 1.5;
+                player.targetVy *= 1.5;
+            }
             
             // Actualizar dirección
             if (Math.abs(input.x) > 0.1) {

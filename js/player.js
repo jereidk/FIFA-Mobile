@@ -217,7 +217,7 @@ class Player {
         return false;
     }
 
-    shoot(targetX, targetY, ball) {
+    shoot(targetX, targetY, ball, height = null, curve = 0) {
         if (!this.hasBall || this.shootCooldown > 0) return false;
         
         const dx = targetX - this.x;
@@ -225,7 +225,7 @@ class Player {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // Potencia del tiro
-        const power = Math.min(18, Math.max(8, distance / 20 + 8));
+        const power = Math.min(20, Math.max(10, distance / 15 + 10));
         
         // Añadir imprecisión si está cansado
         const accuracy = this.stamina > 30 ? 1 : 0.7;
@@ -234,8 +234,12 @@ class Player {
         const finalTargetX = targetX + randomOffset;
         const finalTargetY = targetY + randomOffset * 0.5;
         
-        ball.shoot(power, finalTargetX, finalTargetY, this.isSprinting ? 10 : 0);
-        this.shootCooldown = 20;
+        // Usar altura proporcionada o calcular según sprint
+        const finalHeight = height !== null ? height : (this.isSprinting ? 12 : 0);
+        // Pasar curva al balón
+        const finalCurve = curve !== 0 ? curve : (Math.random() - 0.5) * 0.5;
+        ball.shoot(power, finalTargetX, finalTargetY, finalHeight, finalCurve);;
+        this.shootCooldown = 18;
         this.hasBall = false;
         
         this.addEffect('shoot');
