@@ -1,0 +1,319 @@
+/* ========================================
+   Debug Console - FIFA Mobile
+   Consola de logs para debugging
+   ======================================== */
+
+#debug-console {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 450px;
+    max-height: 400px;
+    background: linear-gradient(145deg, #1a1a2e 0%, #0d0d1a 100%);
+    border: 2px solid #00ff88;
+    border-radius: 12px;
+    z-index: 10000;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 136, 0.2);
+    display: none;
+    overflow: hidden;
+}
+
+#debug-console.visible {
+    display: block;
+}
+
+#debug-console.minimized {
+    max-height: 45px;
+}
+
+/* Header */
+.debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: linear-gradient(90deg, #00ff88 0%, #00cc6a 100%);
+    color: #0d0d1a;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.debug-header:hover {
+    background: linear-gradient(90deg, #00cc6a 0%, #00aa55 100%);
+}
+
+.debug-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.debug-title::before {
+    content: '🔧';
+    font-size: 16px;
+}
+
+.debug-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.debug-btn {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.debug-btn:hover {
+    transform: scale(1.05);
+}
+
+.debug-btn.copy {
+    background: #2196F3;
+    color: white;
+}
+
+.debug-btn.copy:hover {
+    background: #1976D2;
+}
+
+.debug-btn.clear {
+    background: #f44336;
+    color: white;
+}
+
+.debug-btn.clear:hover {
+    background: #d32f2f;
+}
+
+.debug-btn.toggle {
+    background: #ff9800;
+    color: white;
+}
+
+.debug-btn.toggle:hover {
+    background: #f57c00;
+}
+
+.debug-btn.minimize {
+    background: #9c27b0;
+    color: white;
+}
+
+.debug-btn.minimize:hover {
+    background: #7b1fa2;
+}
+
+/* Log Container */
+.debug-logs {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #0a0a12;
+}
+
+.debug-logs::-webkit-scrollbar {
+    width: 8px;
+}
+
+.debug-logs::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+
+.debug-logs::-webkit-scrollbar-thumb {
+    background: #00ff88;
+    border-radius: 4px;
+}
+
+.debug-logs::-webkit-scrollbar-thumb:hover {
+    background: #00cc6a;
+}
+
+/* Individual Log Entry */
+.log-entry {
+    padding: 6px 10px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    border-left: 4px solid;
+    animation: slideIn 0.2s ease;
+    word-break: break-word;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.log-entry.info {
+    background: rgba(33, 150, 243, 0.15);
+    border-left-color: #2196F3;
+    color: #64b5f6;
+}
+
+.log-entry.success {
+    background: rgba(76, 175, 80, 0.15);
+    border-left-color: #4CAF50;
+    color: #81c784;
+}
+
+.log-entry.warning {
+    background: rgba(255, 152, 0, 0.15);
+    border-left-color: #ff9800;
+    color: #ffb74d;
+}
+
+.log-entry.error {
+    background: rgba(244, 67, 54, 0.2);
+    border-left-color: #f44336;
+    color: #ef5350;
+}
+
+.log-entry.debug {
+    background: rgba(156, 39, 176, 0.15);
+    border-left-color: #9c27b0;
+    color: #ba68c8;
+}
+
+/* Log timestamp */
+.log-time {
+    color: #666;
+    font-size: 10px;
+    margin-right: 8px;
+}
+
+/* Log source badge */
+.log-source {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    margin-right: 8px;
+}
+
+/* Error details */
+.log-entry.error .log-message {
+    font-weight: bold;
+}
+
+.log-stack {
+    font-size: 10px;
+    color: #888;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Toggle Button */
+#debug-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    background: linear-gradient(145deg, #00ff88 0%, #00cc6a 100%);
+    color: #0d0d1a;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+    transition: all 0.3s;
+}
+
+#debug-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 255, 136, 0.6);
+}
+
+#debug-toggle::before {
+    content: '🔧 ';
+}
+
+/* Notification badge */
+#debug-toggle .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #f44336;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Stats Panel (inside console) */
+.debug-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px;
+    background: rgba(0, 255, 136, 0.1);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.stat-item {
+    text-align: center;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
+
+.stat-label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #00ff88;
+}
+
+/* Copy notification */
+.copy-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+    z-index: 10001;
+    animation: fadeInOut 2s ease forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    #debug-console {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+    }
+}

@@ -129,7 +129,7 @@ class Team {
     }
 
     // Encontrar el compañero más cercano al jugador actual
-    findNearest teammate(player) {
+    findNearestTeammate(player) {
         let closest = null;
         let minDistance = Infinity;
         

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>⚽ FIFA Mobile - Jereidk Edition</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/debug-console.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
     <meta name="description" content="FIFA Mobile - A playable 2D football game with realistic physics and smart AI">
     <meta name="mobile-web-app-capable" content="yes">
@@ -196,6 +197,36 @@
         </footer>
     </div>
 
+    <!-- Debug Console -->
+    <div id="debug-console">
+        <div class="debug-header" id="debug-header">
+            <span class="debug-title">FIFA Mobile Debug Console</span>
+            <div class="debug-controls">
+                <button class="debug-btn minimize" id="btn-minimize">−</button>
+                <button class="debug-btn copy" id="btn-copy-logs">📋 Copy</button>
+                <button class="debug-btn clear" id="btn-clear-logs">🗑️ Clear</button>
+            </div>
+        </div>
+        <div class="debug-stats">
+            <div class="stat-item">
+                <div class="stat-label">FPS</div>
+                <div class="stat-value" id="debug-fps">60</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Errors</div>
+                <div class="stat-value" id="debug-errors">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Logs</div>
+                <div class="stat-value" id="debug-log-count">0</div>
+            </div>
+        </div>
+        <div class="debug-logs" id="debug-logs"></div>
+    </div>
+    <button id="debug-toggle">Debug<span class="badge" style="display:none">0</span></button>
+
+    <!-- Scripts - Order matters! -->
+    <script src="js/debug-console.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/ball.js"></script>
     <script src="js/player.js"></script>
