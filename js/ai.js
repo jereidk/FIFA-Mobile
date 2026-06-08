@@ -79,7 +79,7 @@ class AIController {
         this.updateTeamState(ball, homeTeam);
         
         // Actualizar porter
-        const gk = homeTeam.players.find(p => p.isGoalkeeper);
+        const gk = this.team.players.find(p => p.isGoalkeeper);
         if (gk) this.updateGoalkeeper(gk, ball);
         
         // Actualizar jugadores de campo
