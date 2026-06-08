@@ -23,6 +23,9 @@ class Game {
             };
             
             this.currentState = this.STATE.MENU;
+
+        // Goal protection anti-false-detection
+        this.goalProtectionTime = 0;
             
             // Equipos
             window.debugConsole.log('Creating teams...', 'info');
@@ -250,6 +253,19 @@ class Game {
     startMatch() {
         try {
             this.hideAllScreens();
+            
+            // Reset ball to safe position
+            this.ball.x = this.ball.fieldWidth / 2;
+            this.ball.y = this.ball.fieldHeight / 2;
+            this.ball.vx = 0;
+            this.ball.vy = 0;
+            this.ball.height = 0;
+            this.ball.owner = null;
+            this.ball.isFree = true;
+            
+            // Activate goal protection (3 seconds)
+            this.goalProtectionTime = 3000;
+            
             this.currentState = this.STATE.PLAYING;
             this.updateStatus('¡Partido en juego!');
             window.audioManager?.playSound('whistle');
@@ -377,6 +393,11 @@ class Game {
     update(deltaTime) {
         if (this.currentState !== this.STATE.PLAYING) return;
         
+        // Reduce goal protection timer
+        if (this.goalProtectionTime > 0) {
+            this.goalProtectionTime -= deltaTime;
+        }
+
         this.timeRemaining -= deltaTime / 1000;
         
         if (this.timeRemaining <= 0) {
@@ -484,6 +505,9 @@ class Game {
     }
 
     checkGoals() {
+        // No verificar goles durante protección
+        if (this.goalProtectionTime > 0) return null;
+        
         const goalWidth = 120;
         const goalTop = (700 - goalWidth) / 2;
         const goalBottom = (700 + goalWidth) / 2;
