@@ -430,10 +430,20 @@ class Game {
 
     checkPlayerBallCollision(player) {
         if (player.hasBall) return;
+        
         const distance = player.distanceTo(this.ball);
-        const catchDistance = player.radius + this.ball.radius + 3;
+        const ballSpeed = Math.sqrt(this.ball.vx * this.ball.vx + this.ball.vy * this.ball.vy);
+        
+        // Distancia de recogida aumentada para balón quieto
+        // Más difícil recoger un balón que se mueve rápido
+        const baseCatchDistance = player.radius + this.ball.radius + 5;
+        const speedFactor = Math.max(0.5, 1 - ballSpeed * 0.08);
+        const catchDistance = baseCatchDistance * speedFactor;
+        
         if (distance < catchDistance && this.ball.isFree) {
             this.ball.assignTo(player);
+            // Efecto visual
+            player.addEffect('pickup');
         }
     }
 

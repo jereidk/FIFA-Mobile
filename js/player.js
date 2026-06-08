@@ -454,6 +454,21 @@ class Player {
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     break;
+                    
+                case 'pickup':
+                    // Ball pickup effect - golden ring
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + bobAmount, this.radius + 15 * (1 - alpha), 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 215, 0, ${alpha * 0.7})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    // Inner ring
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + bobAmount, this.radius + 8 * (1 - alpha), 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
             }
         });
     }

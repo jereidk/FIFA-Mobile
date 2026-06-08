@@ -23,27 +23,30 @@ class AIController {
         this.difficultyConfig = {
             easy: {
                 reactionTime: 400,
-                maxSpeed: 2.5,
-                shootAccuracy: 0.4,
-                passAccuracy: 0.6,
+                maxSpeed: 2.8,
+                shootAccuracy: 0.45,
+                passAccuracy: 0.65,
                 decisionDelay: 200,
-                aggression: 0.3
+                aggression: 0.35,
+                markDistance: 50
             },
             balanced: {
                 reactionTime: 200,
-                maxSpeed: 3.2,
-                shootAccuracy: 0.65,
-                passAccuracy: 0.8,
+                maxSpeed: 3.5,
+                shootAccuracy: 0.6,
+                passAccuracy: 0.75,
                 decisionDelay: 100,
-                aggression: 0.5
+                aggression: 0.45,
+                markDistance: 55
             },
             hard: {
                 reactionTime: 80,
-                maxSpeed: 3.8,
-                shootAccuracy: 0.85,
-                passAccuracy: 0.95,
+                maxSpeed: 4.0,
+                shootAccuracy: 0.8,
+                passAccuracy: 0.9,
                 decisionDelay: 50,
-                aggression: 0.7
+                aggression: 0.65,
+                markDistance: 60
             }
         };
         
