@@ -1,0 +1,408 @@
+/* ========================================
+   FIFA MOBILE - Jereidk Edition
+   Estilos del Juego
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #1a472a;
+    --secondary-color: #2d5a3d;
+    --accent-color: #f9c74f;
+    --text-light: #ffffff;
+    --text-dark: #1a1a2e;
+    --home-team: #e63946;
+    --away-team: #457b9d;
+    --field-green: #2d8a4e;
+    --field-dark: #228b22;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 1240px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Header - Marcador */
+#game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: linear-gradient(180deg, #1a472a 0%, #0d2818 100%);
+    border-bottom: 3px solid var(--accent-color);
+}
+
+.team-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.team-info.home {
+    flex-direction: row;
+}
+
+.team-info.away {
+    flex-direction: row-reverse;
+}
+
+.team-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.score {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    min-width: 50px;
+    text-align: center;
+}
+
+.match-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+#match-time {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-light);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 20px;
+    border-radius: 8px;
+}
+
+#possession-bar {
+    width: 120px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.possession {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.home-poss {
+    background: var(--home-team);
+    width: 50%;
+}
+
+.away-poss {
+    background: var(--away-team);
+    width: 50%;
+}
+
+/* Canvas del Juego */
+#game-canvas {
+    display: block;
+    width: 100%;
+    background: var(--field-green);
+    cursor: crosshair;
+}
+
+/* Controles Hint */
+#controls-hint {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    flex-wrap: wrap;
+}
+
+#controls-hint span {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 12px;
+    border-radius: 5px;
+}
+
+#controls-hint .key {
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+/* Overlays (Pantallas) */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.overlay-content {
+    background: linear-gradient(145deg, #1a472a 0%, #0d2818 100%);
+    padding: 40px 60px;
+    border-radius: 20px;
+    text-align: center;
+    border: 3px solid var(--accent-color);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    max-width: 90%;
+}
+
+.overlay-content h1 {
+    font-size: 3rem;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.overlay-content h2 {
+    font-size: 1.5rem;
+    color: var(--text-light);
+    margin-bottom: 30px;
+    opacity: 0.9;
+}
+
+.start-buttons, .pause-buttons, .end-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, var(--accent-color) 0%, #e6ad30 100%);
+    color: var(--text-dark);
+    box-shadow: 0 4px 15px rgba(249, 199, 79, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(249, 199, 79, 0.6);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-color);
+}
+
+.version {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
+/* Pantalla Final */
+.final-score {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.final-score span {
+    font-size: 5rem;
+    font-weight: 800;
+    color: var(--text-light);
+}
+
+.final-score .vs {
+    font-size: 2rem;
+    color: var(--accent-color);
+}
+
+#result-title {
+    font-size: 2.5rem;
+}
+
+/* Instrucciones */
+.overlay-content.instructions {
+    max-width: 600px;
+}
+
+.controls-list {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-item .key {
+    background: var(--accent-color);
+    color: var(--text-dark);
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: 700;
+    min-width: 80px;
+    text-align: center;
+}
+
+.control-item .action {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.overlay-content h3 {
+    color: var(--accent-color);
+    margin-top: 25px;
+    font-size: 1.3rem;
+}
+
+.overlay-content p {
+    color: var(--text-light);
+    margin-top: 10px;
+    line-height: 1.6;
+}
+
+/* Footer */
+#game-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 30px;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+#ball-possession {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#game-status {
+    opacity: 0.8;
+}
+
+/* Animaciones */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(249, 199, 79, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(249, 199, 79, 0.6); }
+}
+
+.btn-primary {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    #game-header {
+        padding: 10px 15px;
+        flex-wrap: wrap;
+    }
+    
+    .score {
+        font-size: 1.8rem;
+    }
+    
+    .team-name {
+        font-size: 0.9rem;
+    }
+    
+    #match-time {
+        font-size: 1.3rem;
+    }
+    
+    .overlay-content {
+        padding: 25px 30px;
+    }
+    
+    .overlay-content h1 {
+        font-size: 2rem;
+    }
+    
+    .final-score span {
+        font-size: 3rem;
+    }
+    
+    #controls-hint {
+        gap: 10px;
+    }
+    
+    #controls-hint span {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--primary-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #e6ad30;
+}

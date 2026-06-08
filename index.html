@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ FIFA Mobile - Jereidk Edition</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+</head>
+<body>
+    <div id="game-container">
+        <header id="game-header">
+            <div class="team-info home">
+                <span class="team-name">TU EQUIPO</span>
+                <span class="score" id="home-score">0</span>
+            </div>
+            <div class="match-info">
+                <span id="match-time">3:00</span>
+                <div id="possession-bar">
+                    <div class="possession home-poss"></div>
+                </div>
+            </div>
+            <div class="team-info away">
+                <span class="score" id="away-score">0</span>
+                <span class="team-name">EQUIPO CPU</span>
+            </div>
+        </header>
+
+        <canvas id="game-canvas" width="1200" height="700"></canvas>
+
+        <div id="controls-hint">
+            <span>WASD/Flechas: Mover</span>
+            <span>ESPACIO: Driblar</span>
+            <span>Q: Pasar</span>
+            <span>E: Tirar</span>
+            <span>R: Reset</span>
+        </div>
+
+        <div id="start-screen" class="overlay">
+            <div class="overlay-content">
+                <h1>⚽ FIFA MOBILE</h1>
+                <h2>Jereidk Edition</h2>
+                <div class="start-buttons">
+                    <button id="start-match" class="btn-primary">▶ INICIAR PARTIDO</button>
+                    <button id="instructions-btn" class="btn-secondary">❓ INSTRUCCIONES</button>
+                </div>
+                <p class="version">v1.0.0</p>
+            </div>
+        </div>
+
+        <div id="pause-screen" class="overlay hidden">
+            <div class="overlay-content">
+                <h1>⏸️ PAUSA</h1>
+                <div class="pause-buttons">
+                    <button id="resume-match" class="btn-primary">▶ REANUDAR</button>
+                    <button id="restart-match" class="btn-secondary">🔄 REINICIAR</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen" class="overlay hidden">
+            <div class="overlay-content">
+                <h1 id="result-title">🏆 ¡VICTORIA!</h1>
+                <div class="final-score">
+                    <span id="final-home-score">0</span>
+                    <span class="vs">-</span>
+                    <span id="final-away-score">0</span>
+                </div>
+                <div class="end-buttons">
+                    <button id="play-again" class="btn-primary">🔄 JUGAR DE NUEVO</button>
+                    <button id="back-menu" class="btn-secondary">📋 MENÚ PRINCIPAL</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="instructions-screen" class="overlay hidden">
+            <div class="overlay-content instructions">
+                <h1>📖 INSTRUCCIONES</h1>
+                <div class="controls-list">
+                    <div class="control-item">
+                        <span class="key">WASD</span> o <span class="key">Flechas</span>
+                        <span class="action">Mover jugador con balón</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">ESPACIO</span>
+                        <span class="action">Driblar / Engañar defensa</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">Q</span>
+                        <span class="action">Pasar al compañero más cercano</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">E</span>
+                        <span class="action">Disparar a portería</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">ESC</span>
+                        <span class="action">Pausar/Reanudar</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key">R</span>
+                        <span class="action">Reiniciar partido</span>
+                    </div>
+                </div>
+                <h3>🎯 Objetivo</h3>
+                <p>Anota más goles que el equipo CPU antes de que termine el tiempo (3 minutos)</p>
+                <button id="close-instructions" class="btn-primary">¡ENTENDIDO!</button>
+            </div>
+        </div>
+
+        <footer id="game-footer">
+            <span id="ball-possession">⚽ Posee: Tu Equipo</span>
+            <span id="game-status">Presiona INICIAR para jugar</span>
+        </footer>
+    </div>
+
+    <script src="js/ball.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/team.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

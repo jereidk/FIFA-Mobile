@@ -1,0 +1,75 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Job para verificar que todo está correcto
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Verificar estructura del proyecto
+        run: |
+          echo "=== Verificando archivos del proyecto ==="
+          ls -la
+          
+          echo ""
+          echo "=== Archivos HTML ==="
+          find . -name "*.html" -type f
+          
+          echo ""
+          echo "=== Archivos CSS ==="
+          find . -name "*.css" -type f
+          
+          echo ""
+          echo "=== Archivos JavaScript ==="
+          find . -name "*.js" -type f
+          
+          echo ""
+          echo "=== Verificando index.html ==="
+          if [ -f index.html ]; then
+            echo "✓ index.html encontrado"
+          else
+            echo "✗ index.html NO encontrado"
+            exit 1
+          fi
