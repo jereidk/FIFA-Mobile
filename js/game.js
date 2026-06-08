@@ -372,11 +372,6 @@ class Game {
 
         requestAnimationFrame(loop);
     }
-            requestAnimationFrame(loop);
-        };
-        
-        requestAnimationFrame(loop);
-    }
 
     update(deltaTime) {
         if (this.currentState !== this.STATE.PLAYING) return;
