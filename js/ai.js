@@ -154,7 +154,7 @@ class AIController {
         }
         
         // Si el balón está muy cerca, intentar atraparlo
-        const distToBall = goalkeeper.distanceTo(ball);
+        const distToBall = goalkeeper.distanceTo ? goalkeeper.distanceTo(ball) : Math.hypot(ball.x - goalkeeper.x, ball.y - goalkeeper.y);
         if (distToBall < 60 && ball.x < 100) {
             const bDx = ball.x - goalkeeper.x;
             const bDy = ball.y - goalkeeper.y;
