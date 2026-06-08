@@ -576,6 +576,11 @@ class AIController {
     }
 
     getSeparationPosition(player, ballOwner) {
+        // Safety check - if ballOwner is undefined, return base position
+        if (!ballOwner) {
+            return { x: player.baseX || player.x, y: player.baseY || player.y };
+        }
+
         const dx = player.x - ballOwner.x;
         const dy = player.y - ballOwner.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -587,7 +592,7 @@ class AIController {
         }
         
         const direction = this.side === 'home' ? 1 : -1;
-        const space = this.team.findSpace(ballOwner);
+        const space = this.team.findSpace(null);
         return { x: player.x + direction * 50, y: space.y };
     }
 
