@@ -15,6 +15,10 @@ class DebugConsole {
         this.createElements();
         this.bindEvents();
         
+        // Ensure console starts hidden
+        this.container.style.display = 'none';
+        this.toggleBtn.style.display = 'block';
+        
         this.log('Debug Console initialized', 'success');
         this.log('Press F2 or click button to toggle', 'info');
     }
@@ -28,41 +32,48 @@ class DebugConsole {
     }
 
     createElements() {
-        // Create main container
-        this.container = document.createElement('div');
-        this.container.id = 'debug-console';
-        this.container.innerHTML = `
-            <div class="debug-header" id="debug-header">
-                <span class="debug-title">FIFA Mobile Debug Console</span>
-                <div class="debug-controls">
-                    <button class="debug-btn minimize" id="btn-minimize">−</button>
-                    <button class="debug-btn copy" id="btn-copy-logs">📋 Copy</button>
-                    <button class="debug-btn clear" id="btn-clear-logs">🗑️ Clear</button>
+        // Check if elements already exist in DOM (from HTML)
+        this.container = document.getElementById('debug-console');
+        this.toggleBtn = document.getElementById('debug-toggle');
+        
+        // If not found in HTML, create them programmatically
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.id = 'debug-console';
+            this.container.innerHTML = `
+                <div class="debug-header" id="debug-header">
+                    <span class="debug-title">FIFA Mobile Debug Console</span>
+                    <div class="debug-controls">
+                        <button class="debug-btn minimize" id="btn-minimize">−</button>
+                        <button class="debug-btn copy" id="btn-copy-logs">📋 Copy</button>
+                        <button class="debug-btn clear" id="btn-clear-logs">🗑️ Clear</button>
+                    </div>
                 </div>
-            </div>
-            <div class="debug-stats">
-                <div class="stat-item">
-                    <div class="stat-label">FPS</div>
-                    <div class="stat-value" id="debug-fps">60</div>
+                <div class="debug-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">FPS</div>
+                        <div class="stat-value" id="debug-fps">60</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Errors</div>
+                        <div class="stat-value" id="debug-errors">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Logs</div>
+                        <div class="stat-value" id="debug-log-count">0</div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Errors</div>
-                    <div class="stat-value" id="debug-errors">0</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Logs</div>
-                    <div class="stat-value" id="debug-log-count">0</div>
-                </div>
-            </div>
-            <div class="debug-logs" id="debug-logs"></div>
-        `;
-        document.body.appendChild(this.container);
-
-        // Create toggle button
-        this.toggleBtn = document.createElement('button');
-        this.toggleBtn.id = 'debug-toggle';
-        this.toggleBtn.innerHTML = 'Debug<span class="badge" style="display:none">0</span>';
-        document.body.appendChild(this.toggleBtn);
+                <div class="debug-logs" id="debug-logs"></div>
+            `;
+            document.body.appendChild(this.container);
+        }
+        
+        if (!this.toggleBtn) {
+            this.toggleBtn = document.createElement('button');
+            this.toggleBtn.id = 'debug-toggle';
+            this.toggleBtn.innerHTML = 'Debug<span class="badge" style="display:none">0</span>';
+            document.body.appendChild(this.toggleBtn);
+        }
 
         // Cache elements
         this.logsContainer = document.getElementById('debug-logs');
