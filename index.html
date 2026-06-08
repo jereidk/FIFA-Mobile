@@ -2,19 +2,25 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>⚽ FIFA Mobile - Jereidk Edition</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+    <meta name="description" content="FIFA Mobile - A playable 2D football game with realistic physics and smart AI">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
     <div id="game-container">
+        <!-- Header HUD -->
         <header id="game-header">
             <div class="team-info home">
                 <span class="team-name">TU EQUIPO</span>
                 <span class="score" id="home-score">0</span>
             </div>
             <div class="match-info">
+                <div id="half-indicator">1H</div>
                 <span id="match-time">3:00</span>
                 <div id="possession-bar">
                     <div class="possession home-poss"></div>
@@ -26,8 +32,24 @@
             </div>
         </header>
 
+        <!-- Game Canvas -->
         <canvas id="game-canvas" width="1200" height="700"></canvas>
 
+        <!-- Android Controls - Touch Joystick -->
+        <div id="android-controls" class="hidden">
+            <div id="joystick-zone">
+                <div id="joystick-base">
+                    <div id="joystick-stick"></div>
+                </div>
+            </div>
+            <div id="action-buttons">
+                <button id="btn-shoot" class="action-btn shoot-btn">⚽</button>
+                <button id="btn-pass" class="action-btn pass-btn">↗</button>
+                <button id="btn-dribble" class="action-btn dribble-btn">⚡</button>
+            </div>
+        </div>
+
+        <!-- Desktop Controls Hint -->
         <div id="controls-hint">
             <span>WASD/Flechas: Mover</span>
             <span>ESPACIO: Driblar</span>
@@ -36,28 +58,51 @@
             <span>R: Reset</span>
         </div>
 
+        <!-- Start Screen -->
         <div id="start-screen" class="overlay">
             <div class="overlay-content">
-                <h1>⚽ FIFA MOBILE</h1>
+                <div class="game-logo">⚽</div>
+                <h1>FIFA MOBILE</h1>
                 <h2>Jereidk Edition</h2>
+                <p class="subtitle">Partido de Fútbol 2D</p>
                 <div class="start-buttons">
                     <button id="start-match" class="btn-primary">▶ INICIAR PARTIDO</button>
                     <button id="instructions-btn" class="btn-secondary">❓ INSTRUCCIONES</button>
                 </div>
-                <p class="version">v1.0.0</p>
+                <div class="mode-selector">
+                    <select id="game-mode">
+                        <option value="quick">⚡ Partido Rápido (3 min)</option>
+                        <option value="full">🏆 Partido Completo (6 min)</option>
+                        <option value="practice">🎮 Práctica</option>
+                    </select>
+                </div>
+                <p class="version">v2.0.0 - Realismo Total</p>
             </div>
         </div>
 
+        <!-- Pause Screen -->
         <div id="pause-screen" class="overlay hidden">
             <div class="overlay-content">
                 <h1>⏸️ PAUSA</h1>
+                <div class="pause-stats">
+                    <div class="stat-row">
+                        <span>Disparos:</span>
+                        <span id="pause-shots-home">0</span> - <span id="pause-shots-away">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Faltas:</span>
+                        <span id="pause-fouls-home">0</span> - <span id="pause-fouls-away">0</span>
+                    </div>
+                </div>
                 <div class="pause-buttons">
                     <button id="resume-match" class="btn-primary">▶ REANUDAR</button>
                     <button id="restart-match" class="btn-secondary">🔄 REINICIAR</button>
+                    <button id="quit-match" class="btn-secondary">🚪 SALIR</button>
                 </div>
             </div>
         </div>
 
+        <!-- End Screen -->
         <div id="end-screen" class="overlay hidden">
             <div class="overlay-content">
                 <h1 id="result-title">🏆 ¡VICTORIA!</h1>
@@ -66,6 +111,11 @@
                     <span class="vs">-</span>
                     <span id="final-away-score">0</span>
                 </div>
+                <div class="match-stats">
+                    <div class="stat-item"><span>⚽ Goles</span><span id="stat-goals-home">0</span>-<span id="stat-goals-away">0</span></div>
+                    <div class="stat-item"><span>🎯 Tiros</span><span id="stat-shots-home">0</span>-<span id="stat-shots-away">0</span></div>
+                    <div class="stat-item"><span>📋 Faltas</span><span id="stat-fouls-home">0</span>-<span id="stat-fouls-away">0</span></div>
+                </div>
                 <div class="end-buttons">
                     <button id="play-again" class="btn-primary">🔄 JUGAR DE NUEVO</button>
                     <button id="back-menu" class="btn-secondary">📋 MENÚ PRINCIPAL</button>
@@ -73,51 +123,85 @@
             </div>
         </div>
 
+        <!-- Instructions Screen -->
         <div id="instructions-screen" class="overlay hidden">
             <div class="overlay-content instructions">
                 <h1>📖 INSTRUCCIONES</h1>
-                <div class="controls-list">
-                    <div class="control-item">
-                        <span class="key">WASD</span> o <span class="key">Flechas</span>
-                        <span class="action">Mover jugador con balón</span>
+                <div class="controls-section">
+                    <h3>⌨️ Teclado (PC)</h3>
+                    <div class="controls-list">
+                        <div class="control-item">
+                            <span class="key">WASD</span> o <span class="key">Flechas</span>
+                            <span class="action">Mover jugador</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">ESPACIO</span>
+                            <span class="action">Driblar / Sprints</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">Q</span>
+                            <span class="action">Pasar al compañero</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">E</span>
+                            <span class="action">Disparar a portería</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">CLICK</span>
+                            <span class="action">Dirigir pase/tiro</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">ESC</span>
+                            <span class="action">Pausar juego</span>
+                        </div>
                     </div>
-                    <div class="control-item">
-                        <span class="key">ESPACIO</span>
-                        <span class="action">Driblar / Engañar defensa</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key">Q</span>
-                        <span class="action">Pasar al compañero más cercano</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key">E</span>
-                        <span class="action">Disparar a portería</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key">ESC</span>
-                        <span class="action">Pausar/Reanudar</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key">R</span>
-                        <span class="action">Reiniciar partido</span>
+                </div>
+                <div class="controls-section">
+                    <h3>📱 Móvil (Android/iOS)</h3>
+                    <div class="controls-list">
+                        <div class="control-item">
+                            <span class="key">🎮 Joystick</span>
+                            <span class="action">Mover jugador</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">⚽ Tiro</span>
+                            <span class="action">Disparar</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">↗ Pase</span>
+                            <span class="action">Pasar balón</span>
+                        </div>
+                        <div class="control-item">
+                            <span class="key">⚡ Drible</span>
+                            <span class="action">Regatear</span>
+                        </div>
                     </div>
                 </div>
                 <h3>🎯 Objetivo</h3>
-                <p>Anota más goles que el equipo CPU antes de que termine el tiempo (3 minutos)</p>
+                <p>¡Anota más goles que el equipo CPU! Partidos de 3 o 6 minutos.</p>
                 <button id="close-instructions" class="btn-primary">¡ENTENDIDO!</button>
             </div>
         </div>
 
+        <!-- Event Notification -->
+        <div id="event-notification" class="hidden">
+            <span id="event-text">¡GOOOL!</span>
+        </div>
+
+        <!-- Footer HUD -->
         <footer id="game-footer">
             <span id="ball-possession">⚽ Posee: Tu Equipo</span>
             <span id="game-status">Presiona INICIAR para jugar</span>
+            <span id="fps-counter">60 FPS</span>
         </footer>
     </div>
 
+    <script src="js/audio.js"></script>
     <script src="js/ball.js"></script>
     <script src="js/player.js"></script>
     <script src="js/team.js"></script>
     <script src="js/ai.js"></script>
+    <script src="js/android-controls.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

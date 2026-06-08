@@ -1,6 +1,6 @@
 /* ========================================
    FIFA MOBILE - Jereidk Edition
-   Estilos del Juego
+   Estilos Mejorados - Realismo Total
    ======================================== */
 
 * {
@@ -13,41 +13,59 @@
     --primary-color: #1a472a;
     --secondary-color: #2d5a3d;
     --accent-color: #f9c74f;
+    --accent-red: #e63946;
+    --accent-blue: #457b9d;
     --text-light: #ffffff;
     --text-dark: #1a1a2e;
     --home-team: #e63946;
     --away-team: #457b9d;
     --field-green: #2d8a4e;
     --field-dark: #228b22;
+    --grass-light: #3a9d55;
+    --grass-dark: #2d8a4e;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+    background: linear-gradient(135deg, #0a1628 0%, #1a472a 50%, #0d2818 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 10px;
+    overflow: hidden;
 }
 
+/* Main Container */
 #game-container {
     width: 100%;
     max-width: 1240px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(10, 22, 40, 0.95) 0%, rgba(26, 71, 42, 0.9) 100%);
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7), 0 0 60px rgba(249, 199, 79, 0.1);
+    border: 2px solid rgba(249, 199, 79, 0.3);
 }
 
-/* Header - Marcador */
+/* ===== HEADER HUD ===== */
 #game-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 30px;
-    background: linear-gradient(180deg, #1a472a 0%, #0d2818 100%);
+    padding: 12px 25px;
+    background: linear-gradient(180deg, #0a1628 0%, #1a472a 100%);
     border-bottom: 3px solid var(--accent-color);
+    position: relative;
+}
+
+#game-header::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--home-team), var(--accent-color), var(--away-team));
 }
 
 .team-info {
@@ -65,20 +83,27 @@ body {
 }
 
 .team-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--text-light);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .score {
-    font-size: 2.5rem;
-    font-weight: 800;
+    font-size: 2.8rem;
+    font-weight: 900;
     color: var(--accent-color);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    min-width: 50px;
+    text-shadow: 0 0 20px rgba(249, 199, 79, 0.5), 2px 2px 4px rgba(0, 0, 0, 0.5);
+    min-width: 60px;
     text-align: center;
+    transition: transform 0.3s, text-shadow 0.3s;
+}
+
+.score.scored {
+    transform: scale(1.3);
+    text-shadow: 0 0 30px rgba(249, 199, 79, 0.8);
 }
 
 .match-info {
@@ -88,62 +113,159 @@ body {
     gap: 8px;
 }
 
+#half-indicator {
+    background: linear-gradient(145deg, var(--accent-color), #d4a829);
+    color: var(--text-dark);
+    padding: 3px 15px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 #match-time {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--text-light);
-    background: rgba(0, 0, 0, 0.3);
-    padding: 5px 20px;
-    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 5px 25px;
+    border-radius: 10px;
+    font-family: 'Courier New', monospace;
+    border: 1px solid rgba(249, 199, 79, 0.3);
 }
 
 #possession-bar {
-    width: 120px;
-    height: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
+    width: 140px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
     overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .possession {
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.5s ease;
 }
 
 .home-poss {
-    background: var(--home-team);
+    background: linear-gradient(90deg, var(--home-team), #ff6b6b);
     width: 50%;
 }
 
-.away-poss {
-    background: var(--away-team);
-    width: 50%;
-}
-
-/* Canvas del Juego */
+/* ===== GAME CANVAS ===== */
 #game-canvas {
     display: block;
     width: 100%;
     background: var(--field-green);
     cursor: crosshair;
+    touch-action: none;
 }
 
-/* Controles Hint */
+/* ===== ANDROID CONTROLS ===== */
+#android-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    pointer-events: none;
+    z-index: 50;
+}
+
+#android-controls.active {
+    pointer-events: all;
+}
+
+#joystick-zone {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    width: 140px;
+    height: 140px;
+}
+
+#joystick-base {
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.4) 100%);
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(255,255,255,0.1);
+}
+
+#joystick-stick {
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle, var(--accent-color) 0%, #d4a829 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: transform 0.1s;
+}
+
+#action-buttons {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.action-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.5);
+    font-size: 1.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+}
+
+.action-btn:active {
+    transform: scale(0.9);
+}
+
+.shoot-btn {
+    background: linear-gradient(145deg, var(--accent-red), #c1121f);
+    color: white;
+}
+
+.pass-btn {
+    background: linear-gradient(145deg, #4CAF50, #2e7d32);
+    color: white;
+}
+
+.dribble-btn {
+    background: linear-gradient(145deg, #2196F3, #1565c0);
+    color: white;
+}
+
+/* ===== CONTROLS HINT ===== */
 #controls-hint {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.4);
+    gap: 15px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 100%);
     flex-wrap: wrap;
 }
 
 #controls-hint span {
     color: var(--text-light);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     background: rgba(255, 255, 255, 0.1);
-    padding: 5px 12px;
-    border-radius: 5px;
+    padding: 4px 12px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.2);
 }
 
 #controls-hint .key {
@@ -151,19 +273,19 @@ body {
     color: var(--accent-color);
 }
 
-/* Overlays (Pantallas) */
+/* ===== OVERLAYS ===== */
 .overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 100;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(10px);
 }
 
 .overlay.hidden {
@@ -171,56 +293,100 @@ body {
 }
 
 .overlay-content {
-    background: linear-gradient(145deg, #1a472a 0%, #0d2818 100%);
-    padding: 40px 60px;
-    border-radius: 20px;
+    background: linear-gradient(145deg, #0a1628 0%, #1a472a 100%);
+    padding: 40px 50px;
+    border-radius: 25px;
     text-align: center;
     border: 3px solid var(--accent-color);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    max-width: 90%;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 50px rgba(249, 199, 79, 0.2);
+    max-width: 500px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.game-logo {
+    font-size: 5rem;
+    margin-bottom: 10px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .overlay-content h1 {
     font-size: 3rem;
     color: var(--accent-color);
-    margin-bottom: 10px;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+    margin-bottom: 5px;
+    text-shadow: 0 0 30px rgba(249, 199, 79, 0.5);
+    letter-spacing: 3px;
 }
 
 .overlay-content h2 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: var(--text-light);
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     opacity: 0.9;
+}
+
+.subtitle {
+    color: rgba(255,255,255,0.7);
+    font-size: 1rem;
+    margin-bottom: 20px;
 }
 
 .start-buttons, .pause-buttons, .end-buttons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin: 30px 0;
+    gap: 12px;
+    margin: 25px 0;
+}
+
+.mode-selector {
+    margin: 15px 0;
+}
+
+.mode-selector select {
+    padding: 12px 25px;
+    font-size: 1rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-light);
+    border: 2px solid rgba(249, 199, 79, 0.5);
+    cursor: pointer;
+    width: 100%;
+}
+
+.mode-selector select option {
+    background: var(--text-dark);
 }
 
 .btn-primary, .btn-secondary {
-    padding: 15px 40px;
-    font-size: 1.2rem;
+    padding: 14px 35px;
+    font-size: 1.1rem;
     font-weight: 700;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-primary {
-    background: linear-gradient(145deg, var(--accent-color) 0%, #e6ad30 100%);
+    background: linear-gradient(145deg, var(--accent-color) 0%, #d4a829 100%);
     color: var(--text-dark);
-    box-shadow: 0 4px 15px rgba(249, 199, 79, 0.4);
+    box-shadow: 0 5px 20px rgba(249, 199, 79, 0.4);
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(249, 199, 79, 0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(249, 199, 79, 0.6);
 }
 
 .btn-secondary {
@@ -235,88 +401,179 @@ body {
 }
 
 .version {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
     margin-top: 20px;
 }
 
-/* Pantalla Final */
+/* ===== END SCREEN STATS ===== */
 .final-score {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 30px;
-    margin: 30px 0;
+    gap: 40px;
+    margin: 25px 0;
 }
 
 .final-score span {
     font-size: 5rem;
-    font-weight: 800;
+    font-weight: 900;
     color: var(--text-light);
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
 }
 
 .final-score .vs {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--accent-color);
 }
 
-#result-title {
-    font-size: 2.5rem;
+.match-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
 }
 
-/* Instrucciones */
+.stat-item {
+    background: rgba(255,255,255,0.1);
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stat-item span:first-child {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+}
+
+.stat-item span:last-child {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+/* ===== PAUSE STATS ===== */
+.pause-stats {
+    background: rgba(255,255,255,0.05);
+    padding: 15px 25px;
+    border-radius: 15px;
+    margin: 15px 0;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    color: var(--text-light);
+}
+
+.stat-row span:last-child {
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+/* ===== INSTRUCTIONS ===== */
 .overlay-content.instructions {
-    max-width: 600px;
+    max-width: 550px;
+}
+
+.controls-section {
+    text-align: left;
+    margin: 15px 0;
+}
+
+.controls-section h3 {
+    color: var(--accent-color);
+    font-size: 1rem;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 
 .controls-list {
-    text-align: left;
-    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .control-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 12px;
+    padding: 8px 0;
 }
 
 .control-item .key {
     background: var(--accent-color);
     color: var(--text-dark);
-    padding: 8px 15px;
-    border-radius: 5px;
+    padding: 6px 12px;
+    border-radius: 6px;
     font-weight: 700;
-    min-width: 80px;
+    font-size: 0.85rem;
+    min-width: 75px;
     text-align: center;
 }
 
 .control-item .action {
     color: var(--text-light);
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
-.overlay-content h3 {
+.overlay-content h3:not(.controls-section h3) {
     color: var(--accent-color);
-    margin-top: 25px;
-    font-size: 1.3rem;
+    margin-top: 20px;
+    font-size: 1.1rem;
 }
 
 .overlay-content p {
     color: var(--text-light);
     margin-top: 10px;
     line-height: 1.6;
+    font-size: 0.95rem;
 }
 
-/* Footer */
+/* ===== EVENT NOTIFICATION ===== */
+#event-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    pointer-events: none;
+}
+
+#event-notification.show {
+    animation: eventPop 2s ease forwards;
+}
+
+#event-text {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    text-shadow: 0 0 40px rgba(249, 199, 79, 0.8), 0 0 80px rgba(249, 199, 79, 0.5);
+    letter-spacing: 5px;
+}
+
+@keyframes eventPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    40% { transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
+/* ===== FOOTER ===== */
 #game-footer {
     display: flex;
     justify-content: space-between;
-    padding: 10px 30px;
-    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 25px;
+    background: rgba(0, 0, 0, 0.6);
     color: var(--text-light);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 #ball-possession {
@@ -329,12 +586,13 @@ body {
     opacity: 0.8;
 }
 
-/* Animaciones */
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+#fps-counter {
+    font-family: 'Courier New', monospace;
+    color: var(--accent-color);
+    opacity: 0.6;
 }
 
+/* ===== ANIMATIONS ===== */
 @keyframes glow {
     0%, 100% { box-shadow: 0 0 20px rgba(249, 199, 79, 0.3); }
     50% { box-shadow: 0 0 40px rgba(249, 199, 79, 0.6); }
@@ -344,52 +602,70 @@ body {
     animation: glow 2s ease-in-out infinite;
 }
 
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
     body {
-        padding: 10px;
+        padding: 5px;
     }
     
     #game-header {
-        padding: 10px 15px;
+        padding: 8px 15px;
         flex-wrap: wrap;
+        gap: 10px;
     }
     
     .score {
-        font-size: 1.8rem;
+        font-size: 2rem;
+        min-width: 45px;
     }
     
     .team-name {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
     
     #match-time {
         font-size: 1.3rem;
+        padding: 3px 15px;
     }
     
     .overlay-content {
         padding: 25px 30px;
+        margin: 10px;
     }
     
     .overlay-content h1 {
         font-size: 2rem;
     }
     
+    .game-logo {
+        font-size: 3.5rem;
+    }
+    
     .final-score span {
-        font-size: 3rem;
+        font-size: 3.5rem;
     }
     
     #controls-hint {
-        gap: 10px;
+        gap: 8px;
     }
     
     #controls-hint span {
-        font-size: 0.75rem;
-        padding: 4px 8px;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+    
+    #event-text {
+        font-size: 2.5rem;
+    }
+    
+    .action-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
     }
 }
 
-/* Scrollbar personalizada */
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -404,5 +680,5 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #e6ad30;
+    background: #d4a829;
 }

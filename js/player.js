@@ -1,51 +1,59 @@
 /**
- * FIFA Mobile - Player Class
- * Maneja las propiedades y comportamiento de cada jugador
+ * FIFA Mobile - Player Class (Enhanced)
+ * Jugador con mecánicas avanzadas de fútbol
  */
 
 class Player {
     constructor(x, y, team, number, isGoalkeeper = false) {
         this.x = x;
         this.y = y;
-        this.team = team; // 'home' o 'away'
+        this.team = team;
         this.number = number;
         this.isGoalkeeper = isGoalkeeper;
         
         // Propiedades físicas
         this.radius = isGoalkeeper ? 18 : 14;
-        this.speed = isGoalkeeper ? 2.5 : 3.5;
-        this.maxSpeed = this.speed;
+        this.baseSpeed = isGoalkeeper ? 2.5 : 3.5;
+        this.speed = this.baseSpeed;
+        this.sprintSpeed = this.baseSpeed * 1.5;
         
         // Estado del balón
         this.hasBall = false;
         
-        // Dirección (1 = derecha, -1 = izquierda)
+        // Dirección
         this.direction = team === 'home' ? 1 : -1;
         
         // Movimiento
         this.vx = 0;
         this.vy = 0;
-        this.targetX = x;
-        this.targetY = y;
+        this.isSprinting = false;
         
-        // Control de dribling
+        // Stamina (energía)
+        this.stamina = 100;
+        this.maxStamina = 100;
+        this.staminaDrain = 0.15;
+        this.staminaRecovery = 0.05;
+        
+        // Cooldowns
+        this.dribbleCooldown = 0;
+        this.shootCooldown = 0;
+        this.passCooldown = 0;
+        this.tackleCooldown = 0;
+        
+        // Estados
         this.isDribbling = false;
         this.dribbleTimer = 0;
-        this.dribbleCooldown = 0;
+        this.isTackling = false;
+        this.tackleTimer = 0;
         
-        // Control de tiro
-        this.shootCooldown = 0;
-        
-        // Control de paso
-        this.passCooldown = 0;
-        
-        // Posición en el campo (para IA)
+        // Posición y animación
         this.position = this.getPositionName();
-        
-        // Animación
         this.bobOffset = Math.random() * Math.PI * 2;
+        this.runCycle = 0;
         
-        // Color del equipo
+        // Efectos visuales
+        this.effects = [];
+        
         this.updateTeamColors();
     }
 
@@ -54,10 +62,12 @@ class Player {
             this.primaryColor = '#e63946';
             this.secondaryColor = '#ffffff';
             this.skinColor = '#f4d4b0';
+            this.shortsColor = '#1a1a2e';
         } else {
             this.primaryColor = '#457b9d';
             this.secondaryColor = '#a8dadc';
             this.skinColor = '#8d6346';
+            this.shortsColor = '#1a1a2e';
         }
     }
 
@@ -68,48 +78,82 @@ class Player {
         return 'forward';
     }
 
-    update(ball, keys) {
-        // Actualizar cooldowns
-        if (this.dribbleCooldown > 0) this.dribbleCooldown--;
-        if (this.shootCooldown > 0) this.shootCooldown--;
-        if (this.passCooldown > 0) this.passCooldown--;
+    update(ball, keys, deltaTime = 1) {
+        const dt = deltaTime / 16.67;
         
-        // Movimiento basado en teclas (solo para jugador controlado)
+        // Actualizar cooldowns
+        this.updateCooldowns(dt);
+        
+        // Manejar stamina
+        this.updateStamina(dt, keys);
+        
+        // Movimiento basado en teclas
         if (this.hasBall) {
-            this.handlePlayerInput(keys, ball);
-        } else {
-            // Movimiento idle si no tiene balón
-            this.idleMovement();
+            this.handlePlayerInput(keys, ball, dt);
         }
         
-        // Aplicar velocidad
-        this.x += this.vx;
-        this.y += this.vy;
+        // Aplicar velocidad con fricción
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
         
         // Limitar al campo
         this.constrainToField();
         
-        // Reducir velocidad gradualmente
-        this.vx *= 0.9;
-        this.vy *= 0.9;
+        // Actualizar ciclo de carrera
+        if (Math.abs(this.vx) > 0.5 || Math.abs(this.vy) > 0.5) {
+            this.runCycle += dt * 0.3;
+        }
         
-        // Detener si está muy lento
+        // Reducir velocidad
+        this.vx *= Math.pow(0.92, dt);
+        this.vy *= Math.pow(0.92, dt);
+        
+        // Detener si muy lento
         if (Math.abs(this.vx) < 0.05) this.vx = 0;
         if (Math.abs(this.vy) < 0.05) this.vy = 0;
+        
+        // Actualizar efectos
+        this.updateEffects(dt);
     }
 
-    handlePlayerInput(keys, ball) {
-        // Reset velocity
+    updateCooldowns(dt) {
+        if (this.dribbleCooldown > 0) this.dribbleCooldown -= dt;
+        if (this.shootCooldown > 0) this.shootCooldown -= dt;
+        if (this.passCooldown > 0) this.passCooldown -= dt;
+        if (this.tackleCooldown > 0) this.tackleCooldown -= dt;
+        
+        if (this.dribbleTimer > 0) this.dribbleTimer -= dt;
+        if (this.tackleTimer > 0) this.tackleTimer -= dt;
+        
+        if (this.dribbleTimer <= 0) this.isDribbling = false;
+        if (this.tackleTimer <= 0) this.isTackling = false;
+    }
+
+    updateStamina(dt, keys) {
+        // Drenar stamina si está corriendo
+        if ((keys['ShiftLeft'] || keys['ShiftRight']) && this.stamina > 0) {
+            this.stamina -= this.staminaDrain * dt;
+            this.isSprinting = true;
+            this.speed = this.sprintSpeed;
+        } else {
+            this.isSprinting = false;
+            this.speed = this.baseSpeed;
+        }
+        
+        // Recuperar stamina si no está corriendo
+        if (!this.isSprinting && this.stamina < this.maxStamina) {
+            this.stamina += this.staminaRecovery * dt;
+            this.stamina = Math.min(this.maxStamina, this.stamina);
+        }
+    }
+
+    handlePlayerInput(keys, ball, dt) {
         this.vx = 0;
         this.vy = 0;
         
-        // Movement
-        if (keys['KeyW'] || keys['ArrowUp']) {
-            this.vy = -this.speed;
-        }
-        if (keys['KeyS'] || keys['ArrowDown']) {
-            this.vy = this.speed;
-        }
+        // Movimiento
+        if (keys['KeyW'] || keys['ArrowUp']) this.vy = -this.speed;
+        if (keys['KeyS'] || keys['ArrowDown']) this.vy = this.speed;
         if (keys['KeyA'] || keys['ArrowLeft']) {
             this.vx = -this.speed;
             this.direction = -1;
@@ -119,93 +163,150 @@ class Player {
             this.direction = 1;
         }
         
-        // Normalize diagonal movement
+        // Sprint
+        if ((keys['ShiftLeft'] || keys['ShiftRight']) && this.stamina > 0) {
+            this.vx *= 1.5;
+            this.vy *= 1.5;
+        }
+        
+        // Normalizar diagonal
         if (this.vx !== 0 && this.vy !== 0) {
-            const factor = 0.707; // 1/sqrt(2)
+            const factor = 0.707;
             this.vx *= factor;
             this.vy *= factor;
         }
         
         // Dribble
-        if (keys['Space'] && this.dribbleCooldown === 0) {
+        if (keys['Space'] && this.dribbleCooldown <= 0) {
             this.dribble();
         }
     }
 
     dribble() {
         this.isDribbling = true;
-        this.dribbleTimer = 15;
-        this.dribbleCooldown = 30;
+        this.dribbleTimer = 12;
+        this.dribbleCooldown = 25;
         
-        // Burst de velocidad en dirección actual
-        this.vx += this.direction * 2;
-        this.vy += (Math.random() - 0.5) * 1;
+        // Impulso en dirección actual
+        this.vx += this.direction * this.speed * 2;
+        this.vy += (Math.random() - 0.5) * this.speed;
+        
+        // Añadir efecto visual
+        this.addEffect('burst');
+        
+        window.audioManager.playSound('kick');
+    }
+
+    tackle() {
+        if (this.tackleCooldown <= 0 && !this.hasBall) {
+            this.isTackling = true;
+            this.tackleTimer = 15;
+            this.tackleCooldown = 40;
+            
+            // Animación de tackle
+            this.vx = this.direction * this.speed * 1.5;
+            
+            this.addEffect('tackle');
+            
+            return true;
+        }
+        return false;
     }
 
     shoot(targetX, targetY, ball) {
-        if (this.hasBall && this.shootCooldown === 0) {
-            // Calcular potencia basada en distancia
-            const dx = targetX - this.x;
-            const dy = targetY - this.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            // Potencia entre 8 y 18
-            const power = Math.min(18, Math.max(8, distance / 20 + 8));
-            
-            ball.shoot(power, targetX, targetY);
-            this.shootCooldown = 20;
-            this.hasBall = false;
-            
-            return true;
-        }
-        return false;
+        if (!this.hasBall || this.shootCooldown > 0) return false;
+        
+        const dx = targetX - this.x;
+        const dy = targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Potencia del tiro
+        const power = Math.min(18, Math.max(8, distance / 20 + 8));
+        
+        // Añadir imprecisión si está cansado
+        const accuracy = this.stamina > 30 ? 1 : 0.7;
+        const randomOffset = (1 - accuracy) * 30 * (Math.random() - 0.5);
+        
+        const finalTargetX = targetX + randomOffset;
+        const finalTargetY = targetY + randomOffset * 0.5;
+        
+        ball.shoot(power, finalTargetX, finalTargetY, this.isSprinting ? 10 : 0);
+        this.shootCooldown = 20;
+        this.hasBall = false;
+        
+        this.addEffect('shoot');
+        
+        return true;
     }
 
     pass(targetPlayer, ball) {
-        if (this.hasBall && this.passCooldown === 0 && targetPlayer) {
-            ball.pass(this, targetPlayer.x, targetPlayer.y);
-            this.passCooldown = 15;
-            return true;
-        }
-        return false;
+        if (!this.hasBall || this.passCooldown > 0 || !targetPlayer) return false;
+        
+        // Calcular posición predictiva del compañero
+        const predictX = targetPlayer.x + targetPlayer.vx * 10;
+        const predictY = targetPlayer.y + targetPlayer.vy * 10;
+        
+        ball.pass(this, predictX, predictY);
+        this.passCooldown = 12;
+        this.hasBall = false;
+        
+        this.addEffect('pass');
+        
+        return true;
     }
 
-    idleMovement() {
-        // Pequeños movimientos para parecer más natural
-        this.vx *= 0.95;
-        this.vy *= 0.95;
+    lobPass(targetPlayer, ball) {
+        if (!this.hasBall || this.passCooldown > 0 || !targetPlayer) return false;
+        
+        ball.lob(targetPlayer.x, targetPlayer.y);
+        this.passCooldown = 15;
+        this.hasBall = false;
+        
+        this.addEffect('lob');
+        
+        return true;
+    }
+
+    addEffect(type) {
+        this.effects.push({
+            type: type,
+            timer: 20,
+            maxTimer: 20
+        });
+        
+        if (this.effects.length > 5) {
+            this.effects.shift();
+        }
+    }
+
+    updateEffects(dt) {
+        this.effects = this.effects.filter(effect => {
+            effect.timer -= dt;
+            return effect.timer > 0;
+        });
     }
 
     constrainToField() {
-        const padding = 30;
-        const goalArea = 120;
+        const padding = 25;
         
-        // Límites horizontales
-        if (this.x < padding + this.radius) {
-            this.x = padding + this.radius;
-        }
-        if (this.x > 1200 - padding - this.radius) {
-            this.x = 1200 - padding - this.radius;
-        }
-        
-        // Límites verticales
-        if (this.y < padding + this.radius) {
-            this.y = padding + this.radius;
-        }
-        if (this.y > 700 - padding - this.radius) {
-            this.y = 700 - padding - this.radius;
-        }
+        if (this.x < padding + this.radius) this.x = padding + this.radius;
+        if (this.x > 1200 - padding - this.radius) this.x = 1200 - padding - this.radius;
+        if (this.y < padding + this.radius) this.y = padding + this.radius;
+        if (this.y > 700 - padding - this.radius) this.y = 700 - padding - this.radius;
     }
 
     draw(ctx, time) {
-        // Animación de movimiento
-        const bobAmount = Math.sin(time / 150 + this.bobOffset) * 1.5;
+        const bobAmount = Math.sin(time / 120 + this.bobOffset) * (this.isSprinting ? 2.5 : 1.5);
+        const runOffset = Math.sin(this.runCycle) * 3;
         
         // Sombra
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.radius + 3, this.radius * 0.8, this.radius * 0.3, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.ellipse(this.x, this.y + this.radius + 2, this.radius * 0.9, this.radius * 0.4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
         ctx.fill();
+        
+        // Dibujar efectos
+        this.drawEffects(ctx, bobAmount);
         
         // Cuerpo (círculo)
         ctx.beginPath();
@@ -217,7 +318,7 @@ class Player {
             this.x, this.y + bobAmount, this.radius
         );
         gradient.addColorStop(0, this.skinColor);
-        gradient.addColorStop(1, this.darkenColor(this.skinColor, 30));
+        gradient.addColorStop(1, this.darkenColor(this.skinColor, 40));
         ctx.fillStyle = gradient;
         ctx.fill();
         
@@ -227,52 +328,107 @@ class Player {
         ctx.fillStyle = this.primaryColor;
         ctx.fill();
         
-        // Número en la espalda (simplificado - solo mostrar para jugador principal)
+        // Shorts
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + bobAmount + 4, this.radius - 4, 0, Math.PI * 2);
+        ctx.fillStyle = this.shortsColor;
+        ctx.fill();
+        
+        // Número
         ctx.fillStyle = this.secondaryColor;
         ctx.font = 'bold 10px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.number.toString(), this.x, this.y + bobAmount);
+        ctx.fillText(this.number.toString(), this.x, this.y + bobAmount - 2);
         
+        // Indicadores
+        this.drawIndicators(ctx, bobAmount);
+        
+        // Indicador de stamina
+        if (this.stamina < 80) {
+            this.drawStaminaBar(ctx);
+        }
+    }
+
+    drawIndicators(ctx, bobAmount) {
         // Indicador de portero
         if (this.isGoalkeeper) {
             ctx.strokeStyle = '#f9c74f';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.arc(this.x, this.y + bobAmount, this.radius + 3, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y + bobAmount, this.radius + 4, 0, Math.PI * 2);
             ctx.stroke();
         }
         
-        // Indicador de quién tiene el balón
+        // Indicador de posesión del balón
         if (this.hasBall) {
+            // Anillo brillante
             ctx.strokeStyle = '#f9c74f';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.arc(this.x, this.y + bobAmount, this.radius + 5, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y + bobAmount, this.radius + 7, 0, Math.PI * 2);
             ctx.stroke();
             
             // Efecto de brillo
             ctx.beginPath();
             ctx.arc(this.x - 2, this.y + bobAmount - 2, 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.fill();
         }
         
-        // Efecto de dribling
-        if (this.isDribbling && this.dribbleTimer > 0) {
-            this.dribbleTimer--;
-            // Línea de movimiento
+        // Indicador de sprint
+        if (this.isSprinting && this.stamina > 0) {
             ctx.beginPath();
-            ctx.moveTo(this.x, this.y + bobAmount);
-            ctx.lineTo(this.x - this.direction * 20, this.y + bobAmount);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.moveTo(this.x - this.direction * 15, this.y + bobAmount);
+            ctx.lineTo(this.x - this.direction * 25, this.y + bobAmount - 5);
+            ctx.lineTo(this.x - this.direction * 25, this.y + bobAmount + 5);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(249, 199, 79, 0.5)';
+            ctx.fill();
         }
+    }
+
+    drawStaminaBar(ctx) {
+        const barWidth = 30;
+        const barHeight = 4;
+        const x = this.x - barWidth / 2;
+        const y = this.y - this.radius - 12;
         
-        if (this.dribbleTimer === 0) {
-            this.isDribbling = false;
-        }
+        // Fondo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(x, y, barWidth, barHeight);
+        
+        // Stamina
+        const staminaPercent = this.stamina / this.maxStamina;
+        ctx.fillStyle = staminaPercent > 0.3 ? '#4CAF50' : '#f44336';
+        ctx.fillRect(x, y, barWidth * staminaPercent, barHeight);
+    }
+
+    drawEffects(ctx, bobAmount) {
+        this.effects.forEach(effect => {
+            const alpha = effect.timer / effect.maxTimer;
+            
+            switch (effect.type) {
+                case 'burst':
+                    // Efecto de sprint
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + bobAmount, this.radius + 10 * (1 - alpha), 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
+                    
+                case 'shoot':
+                    // Línea de tiro
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y + bobAmount);
+                    ctx.lineTo(this.x + this.direction * 50 * (1 - alpha), this.y + bobAmount);
+                    ctx.strokeStyle = `rgba(249, 199, 79, ${alpha})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    break;
+            }
+        });
     }
 
     darkenColor(hex, amount) {
@@ -283,14 +439,12 @@ class Player {
         return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
     }
 
-    // Distancia a otro jugador o al balón
     distanceTo(other) {
         const dx = other.x - this.x;
         const dy = other.y - this.y;
         return Math.sqrt(dx * dx + dy * dy);
     }
-    
-    // Ángulo hacia otro objeto
+
     angleTo(other) {
         return Math.atan2(other.y - this.y, other.x - this.x);
     }

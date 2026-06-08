@@ -1,75 +1,115 @@
 /**
- * FIFA Mobile - AI Class
- * Inteligencia artificial para el equipo CPU
+ * FIFA Mobile - AI Controller (Enhanced)
+ * Inteligencia artificial inteligente tipo FIFA/PES con múltiples estados
  */
 
 class AIController {
     constructor(team) {
         this.team = team;
-        this.reactionDelay = 500; // ms
-        this.lastDecisionTime = 0;
+        this.gameMode = 'balanced'; // 'easy', 'balanced', 'hard'
         
-        // Configuración de comportamiento
-        this.config = {
-            // Velocidad de reacción
-            reactionSpeed: 0.04,
-            
-            // Velocidad máxima de los jugadores IA
-            maxSpeed: 3,
-            
-            // Distancia para intentar robar el balón
-            stealDistance: 25,
-            
-            // Distancia para chutar a portería
-            shootDistance: 250,
-            
-            // Probabilidad de tiro (0-1)
-            shootChance: 0.7,
-            
-            // Distancia para pasar
-            passDistance: 150,
-            
-            // Velocidad de persecución
-            chaseSpeed: 2.8,
-            
-            // Volver a posición defensiva
-            defensiveReturnSpeed: 2,
-            
-            // Área de presión
-            pressureDistance: 80,
-            
-            // Distancia de marca
-            markingDistance: 50
+        // Estados de la IA
+        this.STATE = {
+            IDLE: 'idle',
+            DEFENDING: 'defending',
+            ATTACKING: 'attacking',
+            COUNTER_ATTACK: 'counter_attack',
+            PRESSING: 'pressing',
+            MARKING: 'marking',
+            SUPPORTING: 'supporting'
         };
         
-        // Estado de la IA
-        this.state = 'idle';
-        this.targetPlayer = null;
+        // Configuración por dificultad
+        this.difficultyConfig = {
+            easy: {
+                reactionTime: 400,
+                maxSpeed: 2.5,
+                shootAccuracy: 0.4,
+                passAccuracy: 0.6,
+                decisionDelay: 200,
+                aggression: 0.3
+            },
+            balanced: {
+                reactionTime: 200,
+                maxSpeed: 3.2,
+                shootAccuracy: 0.65,
+                passAccuracy: 0.8,
+                decisionDelay: 100,
+                aggression: 0.5
+            },
+            hard: {
+                reactionTime: 80,
+                maxSpeed: 3.8,
+                shootAccuracy: 0.85,
+                passAccuracy: 0.95,
+                decisionDelay: 50,
+                aggression: 0.7
+            }
+        };
+        
+        this.config = this.difficultyConfig[this.gameMode];
+        
+        // Memoria de decisiones
+        this.decisionMemory = {
+            lastBallCarrier: null,
+            lastDecisionTime: 0,
+            currentState: this.STATE.IDLE
+        };
+        
+        // Jugador objetivo para marcar
+        this.markingTarget = null;
+        
+        // timers
+        this.thinkTimer = 0;
+        this.thinkInterval = 100; // ms entre pensamientos
+    }
+
+    setDifficulty(difficulty) {
+        this.gameMode = difficulty;
+        this.config = this.difficultyConfig[difficulty];
     }
 
     update(ball, homeTeam, currentTime) {
-        // No procesar si el balón está en nuestro equipo
-        if (ball.owner && ball.owner.team === this.team.side) {
-            return;
-        }
+        // Procesar pensamiento cada cierto intervalo
+        this.thinkTimer += 16.67; // Asumiendo 60fps
+        if (this.thinkTimer < this.thinkInterval) return;
+        this.thinkTimer = 0;
         
-        // Encontrar el jugador más cercano al balón
-        const closestToBall = this.team.getClosestToBall(ball);
+        // Determinar estado general del equipo
+        this.updateTeamState(ball, homeTeam);
         
-        // Encontrar jugador con balón rival más cercano
-        let closestRivalWithBall = null;
-        if (ball.owner) {
-            closestRivalWithBall = ball.owner;
-        }
+        // Actualizar porter
+        this.updateGoalkeeper(ball, homeTeam);
         
-        // Actualizar cada jugador
+        // Actualizar jugadores de campo
         this.team.players.forEach(player => {
-            if (player.isGoalkeeper) {
-                this.updateGoalkeeper(player, ball);
-            } else {
-                this.updateFieldPlayer(player, ball, closestToBall, closestRivalWithBall, homeTeam);
+            if (!player.isGoalkeeper) {
+                this.updatePlayer(player, ball, homeTeam);
             }
         });
+    }
+
+    updateTeamState(ball, homeTeam) {
+        const ourGoalX = this.team.side === 'home' ? 0 : 1200;
+        const theirGoalX = this.team.side === 'home' ? 1200 : 0;
+        
+        // Evaluar situación
+        const ballInOurHalf = ball.x < 600;
+        const ballInTheirHalf = ball.x > 600;
+        const weHaveBall = ball.owner && ball.owner.team === this.team.side;
+        
+        if (weHaveBall) {
+            this.decisionMemory.currentState = this.STATE.ATTACKING;
+        } else if (ball.owner && ball.owner.team !== this.team.side) {
+            if (ballInOurHalf) {
+                this.decisionMemory.currentState = this.STATE.DEFENDING;
+            } else {
+                this.decisionMemory.currentState = this.STATE.PRESSING;
+            }
+        } else {
+            // Balón libre
+            this.decisionMemory.currentState = this.STATE.IDLE;
+        }
     }
 
     updateGoalkeeper(goalkeeper, ball) {
@@ -77,88 +117,106 @@ class AIController {
         const goalWidth = 120;
         const fieldWidth = 1200;
         
-        // Determinar posición objetivo
+        let targetX = this.team.side === 'home' ? 30 : fieldWidth - 30;
         let targetY = goalCenterY;
         
-        // Si el balón viene hacia nuestra portería, salir a bloquear
-        if (ball.vx < 0 && ball.x > 800) {
-            // Balón acercándose
-            const distanceToGoal = fieldWidth - ball.x;
-            if (distanceToGoal < 300) {
-                // Salir de la portería
-                targetY = ball.y;
+        // Si el balón está lejos, reposicionarse
+        if (ball.x > 400 && ball.x < 800) {
+            // Balón en campo medio - salir un poco
+            targetX = this.team.side === 'home' ? 50 : fieldWidth - 50;
+            targetY = ball.y * 0.4 + goalCenterY * 0.6;
+        } else if (ball.x > 700) {
+            // Balón acercándose a nuestra portería
+            const dangerLevel = (ball.x - 700) / 500;
+            targetY = ball.y * (0.3 + dangerLevel * 0.5) + goalCenterY * (0.7 - dangerLevel * 0.3);
+            
+            // Salir de la línea si hay peligro
+            if (ball.vx < 0 && ball.x > 900) {
+                targetX = this.team.side === 'home' ? 80 : fieldWidth - 80;
             }
-        }
-        
-        // Siempre mantener posición entre balón y portería
-        if (ball.x > 600) {
-            targetY = ball.y * 0.3 + goalCenterY * 0.7;
         }
         
         // Limitar al área de la portería
-        const minY = (700 - goalWidth) / 2 + 20;
-        const maxY = (700 + goalWidth) / 2 - 20;
+        const minY = (700 - goalWidth) / 2 + 15;
+        const maxY = (700 + goalWidth) / 2 - 15;
         targetY = Math.max(minY, Math.min(maxY, targetY));
         
         // Mover hacia posición objetivo
+        const dx = targetX - goalkeeper.x;
         const dy = targetY - goalkeeper.y;
-        if (Math.abs(dy) > 5) {
-            goalkeeper.vy = Math.sign(dy) * Math.min(this.config.maxSpeed, Math.abs(dy) * 0.1);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+            const speed = Math.min(this.config.maxSpeed * 0.8, distance * 0.08);
+            goalkeeper.vx = (dx / distance) * speed;
+            goalkeeper.vy = (dy / distance) * speed;
         }
         
-        // Si el balón está muy cerca, salir a atraparlo
+        // Si el balón está muy cerca, intentar atraparlo
         const distToBall = goalkeeper.distanceTo(ball);
-        if (distToBall < 50 && ball.x < 100) {
-            const dx = ball.x - goalkeeper.x;
-            const dy = ball.y - goalkeeper.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+        if (distToBall < 60 && ball.x < 100) {
+            const bDx = ball.x - goalkeeper.x;
+            const bDy = ball.y - goalkeeper.y;
+            const bDist = Math.sqrt(bDx * bDx + bDy * bDy);
             
-            goalkeeper.vx = (dx / dist) * this.config.maxSpeed;
-            goalkeeper.vy = (dy / dist) * this.config.maxSpeed;
+            if (bDist > 5) {
+                goalkeeper.vx = (bDx / bDist) * this.config.maxSpeed;
+                goalkeeper.vy = (bDy / bDist) * this.config.maxSpeed;
+            }
         }
     }
 
-    updateFieldPlayer(player, ball, closestToBall, rivalWithBall, homeTeam) {
-        const fieldWidth = 1200;
-        const fieldHeight = 700;
+    updatePlayer(player, ball, homeTeam) {
+        // Determinar rol según posición y estado del juego
+        const role = this.determineRole(player, ball);
         
-        // Si este jugador está más cercano al balón, ir por él
-        if (player === closestToBall) {
-            this.chaseBall(player, ball);
-            return;
-        }
-        
-        // Si un rival tiene el balón, marcar y presionar
-        if (rivalWithBall) {
-            const distanceToRival = player.distanceTo(rivalWithBall);
-            
-            // Si está muy cerca, intentar robar
-            if (distanceToRival < this.config.stealDistance && ball.owner === rivalWithBall) {
-                this.attemptSteal(player, ball, rivalWithBall);
-            } else if (distanceToRival < this.config.pressureDistance) {
-                // Presionar al rival
-                this.pressPlayer(player, rivalWithBall);
-            } else {
-                // Volver a posición defensiva base
-                this.returnToPosition(player);
-            }
-            return;
-        }
-        
-        // Si el balón está libre, ir a buscarlo
-        if (!ball.owner) {
-            if (player === closestToBall) {
+        switch (role) {
+            case 'ball_chaser':
                 this.chaseBall(player, ball);
-            } else {
-                // Posicionarse para recuperación
-                this.positionForRecovery(player, ball);
-            }
-            return;
+                break;
+            case 'marker':
+                this.markOpponent(player, ball, homeTeam);
+                break;
+            case 'support':
+                this.supportAttack(player, ball);
+                break;
+            case 'defender':
+                this.defendPosition(player, ball);
+                break;
+            case 'attacker':
+                this.attackPosition(player, ball);
+                break;
+        }
+    }
+
+    determineRole(player, ball) {
+        const closestToBall = this.team.getClosestToBall(ball);
+        
+        // Si es el más cercano al balón, perseguirlo
+        if (player === closestToBall && !ball.owner) {
+            return 'ball_chaser';
         }
         
-        // Comportamiento ofensivo cuando tenemos posesión (no aplica aquí)
-        // Pero podemos posicionar paracontraataque
-        this.returnToPosition(player);
+        // Si tenemos posesión
+        if (ball.owner && ball.owner.team === this.team.side) {
+            // Jugadores adelante son soportes
+            if (this.team.side === 'home' ? player.x > ball.x : player.x < ball.x) {
+                return 'support';
+            }
+            return 'defender';
+        }
+        
+        // Si el rival tiene el balón
+        if (ball.owner && ball.owner.team !== this.team.side) {
+            // Los más cercanos presionan
+            if (player.distanceTo(ball.owner) < 150) {
+                return 'ball_chaser';
+            }
+            // Otros marcan
+            return 'marker';
+        }
+        
+        return 'defender';
     }
 
     chaseBall(player, ball) {
@@ -166,133 +224,186 @@ class AIController {
         const dy = ball.y - player.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance > 5) {
-            const speed = Math.min(this.config.chaseSpeed, distance * 0.1);
-            player.vx = (dx / distance) * speed;
-            player.vy = (dy / distance) * speed;
-            
-            // Actualizar dirección
-            player.direction = dx > 0 ? 1 : -1;
-        }
-    }
-
-    pressPlayer(player, target) {
-        const dx = target.x - player.x;
-        const dy = target.y - player.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 10) {
-            const speed = this.config.chaseSpeed * 0.9;
+        if (distance > 8) {
+            const speed = Math.min(this.config.maxSpeed, distance * 0.12);
             player.vx = (dx / distance) * speed;
             player.vy = (dy / distance) * speed;
         }
-    }
-
-    attemptSteal(player, ball, ballHolder) {
-        const distance = player.distanceTo(ballHolder);
         
-        if (distance < this.config.stealDistance) {
-            // Mover directamente hacia el portador del balón
-            const dx = ballHolder.x - player.x;
-            const dy = ballHolder.y - player.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            player.vx = (dx / dist) * this.config.maxSpeed;
-            player.vy = (dy / dist) * this.config.maxSpeed;
+        // Intentar robar si está muy cerca
+        if (distance < 25 && ball.owner) {
+            // Intento de robo - con probabilidad según dificultad
+            if (Math.random() < this.config.aggression * 0.3) {
+                // Robo exitoso
+                ball.assignTo(player);
+            }
         }
     }
 
-    returnToPosition(player) {
-        // Volver a posición base según el número
-        // Esto hace que los jugadores mantengan formación
-        const formation = this.team.formation[player.number - 1];
-        if (!formation) return;
+    markOpponent(player, ball, homeTeam) {
+        // Encontrar el oponente más peligroso a marcar
+        if (!this.markingTarget || this.markingTarget !== ball.owner) {
+            this.markingTarget = ball.owner;
+        }
         
-        // Posición objetivo (reflejada para equipo away)
-        const targetX = (1 - formation.x) * 1200;
-        const targetY = formation.y * 700;
+        if (this.markingTarget) {
+            const dx = this.markingTarget.x - player.x;
+            const dy = this.markingTarget.y - player.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Mantener distancia de marca
+            if (distance > 60) {
+                player.vx = (dx / distance) * this.config.maxSpeed * 0.7;
+                player.vy = (dy / distance) * this.config.maxSpeed * 0.7;
+            } else if (distance < 30) {
+                // Demasiado cerca - retroceder un poco
+                player.vx = -(dx / distance) * this.config.maxSpeed * 0.5;
+                player.vy = -(dy / distance) * this.config.maxSpeed * 0.5;
+            }
+        } else {
+            // Volver a posición defensiva
+            this.returnToPosition(player);
+        }
+    }
+
+    supportAttack(player, ball) {
+        // Buscar espacio para recibir pase
+        const ourGoalX = this.team.side === 'home' ? 0 : 1200;
+        const theirGoalX = this.team.side === 'home' ? 1200 : 0;
+        
+        // Posición ideal: entre balón y portería contraria
+        let targetX, targetY;
+        
+        if (player.hasBall) {
+            // Este jugador tiene el balón - avanzar
+            targetX = player.x + (this.team.side === 'home' ? 30 : -30);
+            targetY = player.y;
+        } else {
+            // Buscar espacio
+            targetX = ball.x + (this.team.side === 'home' ? 50 : -50);
+            targetY = ball.y + (Math.random() - 0.5) * 100;
+        }
         
         const dx = targetX - player.x;
         const dy = targetY - player.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         if (distance > 20) {
-            const speed = Math.min(this.config.defensiveReturnSpeed, distance * 0.05);
+            const speed = Math.min(this.config.maxSpeed * 0.8, distance * 0.06);
+            player.vx = (dx / distance) * speed;
+            player.vy = (dy / distance) * speed;
+        }
+        
+        // Decidir si pasar o disparar
+        if (player.hasBall) {
+            this.makeOffensiveDecision(player, ball);
+        }
+    }
+
+    makeOffensiveDecision(player, ball) {
+        const theirGoalX = this.team.side === 'home' ? 1200 : 0;
+        const distanceToGoal = Math.abs(theirGoalX - player.x);
+        
+        // Evaluar tiro
+        if (distanceToGoal < 200 && Math.random() < this.config.shootAccuracy * 0.4) {
+            const targetY = 350 + (Math.random() - 0.5) * 80;
+            player.shoot(theirGoalX, targetY, ball);
+            return;
+        }
+        
+        // Evaluar pase
+        const bestTarget = this.team.findBestPassTarget(player);
+        if (bestTarget && Math.random() < this.config.passAccuracy) {
+            player.pass(bestTarget, ball);
+        }
+    }
+
+    defendPosition(player, ball) {
+        // Volver a posición defensiva base
+        this.returnToPosition(player);
+    }
+
+    attackPosition(player, ball) {
+        // Avanzar hacia el área
+        const theirGoalX = this.team.side === 'home' ? 1200 : 0;
+        
+        // Encontrar espacio
+        let targetX = ball.x + (this.team.side === 'home' ? 40 : -40);
+        let targetY = ball.y + (Math.random() - 0.5) * 150;
+        
+        // Limitar avance
+        if (this.team.side === 'home') {
+            targetX = Math.min(targetX, 1100);
+        } else {
+            targetX = Math.max(targetX, 100);
+        }
+        
+        const dx = targetX - player.x;
+        const dy = targetY - player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 25) {
+            const speed = Math.min(this.config.maxSpeed * 0.7, distance * 0.05);
             player.vx = (dx / distance) * speed;
             player.vy = (dy / distance) * speed;
         }
     }
 
-    positionForRecovery(player, ball) {
-        // Posicionarse entre el balón y nuestra portería
-        const goalX = this.team.side === 'home' ? 1200 : 0;
-        const goalY = 350;
+    returnToPosition(player) {
+        const formation = this.team.formation[player.number - 1];
+        if (!formation) return;
         
-        // Interpolación entre balón y portería
-        const ratio = 0.3;
-        const targetX = ball.x + (goalX - ball.x) * ratio;
-        const targetY = ball.y + (goalY - ball.y) * ratio;
+        // Posición objetivo (reflejada para equipo away)
+        let targetX = (1 - formation.x) * 1200;
+        const targetY = formation.y * 700;
+        
+        // Ajuste según estado del juego
+        if (this.decisionMemory.currentState === this.STATE.DEFENDING) {
+            // Mantener líneas más juntas
+            targetX = this.team.side === 'home' 
+                ? Math.max(200, targetX - 100)
+                : Math.min(1000, targetX + 100);
+        }
         
         const dx = targetX - player.x;
         const dy = targetY - player.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         if (distance > 30) {
-            const speed = Math.min(this.config.chaseSpeed * 0.7, distance * 0.05);
+            const speed = Math.min(this.config.maxSpeed * 0.5, distance * 0.03);
             player.vx = (dx / distance) * speed;
             player.vy = (dy / distance) * speed;
         }
     }
 
-    // Verificar si un jugador de este equipo debe disparar
-    shouldShoot(player, ball) {
-        if (!player.hasBall) return false;
+    // Verificar si debe intentar robar
+    shouldAttemptSteal(player, ball) {
+        if (!ball.owner || ball.owner.team === this.team.side) return false;
         
-        const distanceToGoal = this.team.side === 'home' 
-            ? 1200 - player.x 
-            : player.x;
+        const distance = player.distanceTo(ball.owner);
         
-        if (distanceToGoal > this.config.shootDistance) return false;
-        
-        // Verificar ángulo de tiro
-        const goalY = 350;
-        const angleToGoal = Math.atan2(goalY - player.y, 
-            this.team.side === 'home' ? 1200 - player.x : -player.x);
-        
-        // Si está bien posicionado, considerar disparar
-        if (Math.abs(angleToGoal) < Math.PI / 3) {
-            // Añadir algo de aleatoriedad para hacerlo más realista
-            return Math.random() < this.config.shootChance;
-        }
-        
-        return false;
-    }
-
-    // Verificar si debe pasar
-    shouldPass(player, ball, teammates) {
-        if (!player.hasBall) return false;
-        
-        const distanceToGoal = this.team.side === 'home' 
-            ? 1200 - player.x 
-            : player.x;
-        
-        // Si está muy lejos de la portería, pasar
-        if (distanceToGoal > 400) {
+        if (distance < 30 && Math.random() < this.config.aggression * 0.5) {
             return true;
         }
         
-        // Si hay compañeros más adelante, pasar
-        const bestTarget = this.team.findBestPassTarget(player);
-        if (bestTarget && player.distanceTo(bestTarget) < this.config.passDistance) {
-            // Pasar si hay defensa cerca
-            return Math.random() < 0.4;
-        }
-        
         return false;
+    }
+
+    // Calcular ángulo de tiro óptimo
+    calculateShootAngle(player, ball) {
+        const theirGoalX = this.team.side === 'home' ? 1200 : 0;
+        const goalCenterY = 350;
+        
+        // Añadir imprecisión según dificultad
+        const accuracy = this.config.shootAccuracy;
+        const randomOffset = (1 - accuracy) * 50 * (Math.random() - 0.5);
+        
+        return {
+            x: theirGoalX,
+            y: goalCenterY + randomOffset
+        };
     }
 }
 
-// Exportar para uso en otros archivos
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AIController;
-}
+// Exportar para uso global
+window.AIController = AIController;
