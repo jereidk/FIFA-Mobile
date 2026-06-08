@@ -11,17 +11,19 @@ class Ball {
         this.vx = 0;
         this.vy = 0;
         
-        // Física realista
+        // Física mejorada
         this.friction = 0.985;
-        this.groundFriction = 0.92;
-        this.airResistance = 0.998;
-        this.bounceCoeff = 0.7;
-        this.maxSpeed = 18;
-        this.minSpeed = 0.05;
+        this.groundFriction = 0.94;
+        this.airResistance = 0.995;
+        this.bounceCoeff = 0.65;
+        this.maxSpeed = 20;
+        this.minSpeed = 0.03;
         
-        // Efecto Magnus (curve)
+        // Efecto Magnus mejorado (curve)
         this.spin = 0;
-        this.magnusCoeff = 0.15;
+        this.spinX = 0; // Spin horizontal
+        this.magnusCoeff = 0.25;
+        this.magnusCoeffX = 0.15;
         
         // Estado
         this.owner = null;
@@ -29,19 +31,23 @@ class Ball {
         this.isAirborne = false;
         this.height = 0;
         this.targetHeight = 0;
+        this.verticalVelocity = 0;
         
         // Campo
         this.fieldWidth = 1200;
         this.fieldHeight = 700;
         this.goalWidth = 120;
-        this.goalDepth = 30;
+        this.goalDepth = 40;
         
         // Efectos visuales
         this.trail = [];
-        this.maxTrailLength = 10;
+        this.maxTrailLength = 15;
         
         // Sonido
         this.lastHitTime = 0;
+        
+        // Velocidad de lanzamiento (para pickups difíciles)
+        this.launchSpeed = 0;
     }
 
     update(deltaTime = 1) {
@@ -75,18 +81,47 @@ class Ball {
     }
 
     applyPhysics(dt) {
-        // Aplicar resistencia del aire
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         
         if (this.isAirborne) {
-            // En el aire, menor fricción
+            // En el aire - física de proyectil con gravedad parcial
             this.vx *= Math.pow(this.airResistance, dt);
             this.vy *= Math.pow(this.airResistance, dt);
             
-            // Efecto Magnus (curva)
+            // Efecto Magnus mejorado (curva)
             if (Math.abs(this.spin) > 0.1) {
                 this.vy += this.spin * this.magnusCoeff * dt;
-                this.spin *= 0.98; // Reducir spin gradualmente
+                this.spin *= 0.97; // Reducir spin gradualmente
+            }
+            
+            // Efecto Magnus horizontal
+            if (Math.abs(this.spinX) > 0.1) {
+                this.vx += this.spinX * this.magnusCoeffX * dt;
+                this.spinX *= 0.97;
+            }
+            
+            // Gravedad simulada para arco
+            if (this.height > 0) {
+                this.verticalVelocity -= 0.8 * dt; // Gravedad
+                this.height += this.verticalVelocity * dt;
+                
+                // Rebote en el aire si toca "suelo"
+                if (this.height <= 0 && this.verticalVelocity < -2) {
+                    this.height = 0;
+                    this.verticalVelocity = -this.verticalVelocity * 0.5;
+                    this.vx *= 0.8;
+                    this.vy *= 0.8;
+                    this.playHitSound();
+                } else if (this.height <= 0) {
+                    this.height = 0;
+                    this.verticalVelocity = 0;
+                    this.isAirborne = false;
+                }
+            }
+            
+            // Reducir altura objetivo
+            if (this.height >= this.targetHeight) {
+                this.targetHeight *= 0.95;
             }
         } else {
             // En el suelo, mayor fricción
@@ -111,10 +146,11 @@ class Ball {
         }
         
         // Detener si muy lento
-        if (speed < this.minSpeed) {
+        if (speed < this.minSpeed && !this.isAirborne) {
             this.vx = 0;
             this.vy = 0;
             this.spin = 0;
+            this.spinX = 0;
         }
         
         this.isFree = true;
@@ -244,27 +280,34 @@ class Ball {
         window.audioManager?.playSound('post');
     }
 
-    shoot(power, targetX, targetY, height = 0) {
+    shoot(power, targetX, targetY, height = 0, curve = 0) {
         if (!this.owner) return false;
         
         const dx = targetX - this.x;
         const dy = targetY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Calcular potencia y efecto
+        // Calcular potencia mejorada
         const normalizedPower = Math.min(1, power / this.maxSpeed);
-        const shootPower = 8 + normalizedPower * 10;
+        const shootPower = 10 + normalizedPower * 10; // 10-20 range
         
-        // Añadir efecto (curva) basado en posición del objetivo
-        const curveFactor = (targetY - this.fieldHeight / 2) / this.fieldHeight * 2;
+        // Añadir efecto (curva) basado en parámetro curve o posición del objetivo
+        const curveFactor = curve !== 0 ? curve : (targetY - this.fieldHeight / 2) / this.fieldHeight * 2;
         
         this.vx = (dx / distance) * shootPower;
-        this.vy = (dy / distance) * shootPower + curveFactor;
-        this.spin = curveFactor * 3;
+        this.vy = (dy / distance) * shootPower + curveFactor * 2;
+        this.spin = curveFactor * 4;
+        this.spinX = (Math.random() - 0.5) * 0.5; // Small random horizontal spin
+        
+        // Velocidad vertical para arco
+        this.verticalVelocity = height > 0 ? height * 0.5 : 0;
         
         // Altura del tiro
-        this.targetHeight = height;
-        this.isAirborne = height > 5;
+        this.targetHeight = height + Math.min(20, distance / 30);
+        this.isAirborne = this.targetHeight > 5;
+        
+        // Velocidad de lanzamiento para dificultar pickup
+        this.launchSpeed = shootPower;
         
         // Soltar balón
         this.owner.hasBall = false;
@@ -274,7 +317,7 @@ class Ball {
         return true;
     }
 
-    pass(fromPlayer, toX, toY) {
+    pass(fromPlayer, toX, toY, speed = null) {
         if (this.owner !== fromPlayer) return false;
         
         const dx = toX - this.x;
@@ -282,11 +325,14 @@ class Ball {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // Velocidad de pase
-        const passSpeed = Math.min(14, distance / 15 + 6);
+        const passSpeed = speed !== null ? speed : Math.min(15, distance / 15 + 6);
         
         this.vx = (dx / distance) * passSpeed;
         this.vy = (dy / distance) * passSpeed;
-        this.spin = (Math.random() - 0.5) * 0.5;
+        this.spin = (Math.random() - 0.5) * 0.3;
+        this.spinX = 0;
+        
+        this.launchSpeed = passSpeed;
         
         this.owner.hasBall = false;
         this.owner = null;
@@ -295,20 +341,24 @@ class Ball {
         return true;
     }
 
-    lob(targetX, targetY) {
+    lob(targetX, targetY, height = 50) {
         if (!this.owner) return false;
         
         const dx = targetX - this.x;
         const dy = targetY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        const lobPower = Math.min(12, distance / 20 + 6);
+        const lobPower = Math.min(14, distance / 18 + 6);
         
         this.vx = (dx / distance) * lobPower;
-        this.vy = (dy / distance) * lobPower * 0.5;
-        this.targetHeight = 40 + Math.min(30, distance / 20);
+        this.vy = (dy / distance) * lobPower * 0.6;
+        this.targetHeight = height;
         this.isAirborne = true;
-        this.spin = 1;
+        this.spin = 1.5;
+        this.spinX = (Math.random() - 0.5) * 0.5;
+        this.verticalVelocity = Math.sqrt(height * 2); // Initial velocity for arc
+        
+        this.launchSpeed = lobPower;
         
         this.owner.hasBall = false;
         this.owner = null;

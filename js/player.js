@@ -15,7 +15,9 @@ class Player {
         this.radius = isGoalkeeper ? 18 : 14;
         this.baseSpeed = isGoalkeeper ? 2.5 : 3.5;
         this.speed = this.baseSpeed;
-        this.sprintSpeed = this.baseSpeed * 1.5;
+        this.sprintSpeed = this.baseSpeed * 1.6;
+        this.acceleration = 0.35;
+        this.deceleration = 0.88;
         
         // Estado del balón
         this.hasBall = false;
@@ -45,6 +47,8 @@ class Player {
         this.dribbleTimer = 0;
         this.isTackling = false;
         this.tackleTimer = 0;
+        this.tackleRange = 30;
+        this.tackleSuccess = 0.35;
         
         // Posición y animación
         this.position = this.getPositionName();

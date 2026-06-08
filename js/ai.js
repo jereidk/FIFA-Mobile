@@ -233,10 +233,17 @@ class AIController {
         
         // Intentar robar si está muy cerca
         if (distance < 25 && ball.owner) {
-            // Intento de robo - con probabilidad según dificultad
-            if (Math.random() < this.config.aggression * 0.3) {
-                // Robo exitoso
-                ball.assignTo(player);
+            // Sistema de tackleo mejorado
+            const tackleChance = this.config.aggression * 0.4;
+            const ballSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+            const speedFactor = Math.max(0.3, 1 - ballSpeed * 0.05); // Balón rápido es más difícil de robar
+            
+            // Solo intentar robar si el rival tiene el balón
+            if (ball.owner.team !== this.team.side) {
+                if (Math.random() < tackleChance * speedFactor) {
+                    // Robo exitoso
+                    ball.assignTo(player);
+                }
             }
         }
     }
@@ -306,20 +313,44 @@ class AIController {
 
     makeOffensiveDecision(player, ball) {
         const theirGoalX = this.team.side === 'home' ? 1200 : 0;
+        const goalCenterY = 350;
+        const goalTop = goalCenterY - 50;
+        const goalBottom = goalCenterY + 50;
         const distanceToGoal = Math.abs(theirGoalX - player.x);
+        const playerY = player.y;
         
-        // Evaluar tiro
-        if (distanceToGoal < 200 && Math.random() < this.config.shootAccuracy * 0.4) {
-            const targetY = 350 + (Math.random() - 0.5) * 80;
+        // Evaluar tiro con mejores condiciones
+        const inGoodPosition = playerY > goalTop && playerY < goalBottom;
+        const goodDistance = distanceToGoal < 250 && distanceToGoal > 80;
+        
+        // Calcular probabilidad de tiro basada en dificultad y posición
+        let shootChance = 0;
+        if (distanceToGoal < 100) shootChance = 0.7;
+        else if (distanceToGoal < 150) shootChance = 0.5;
+        else if (distanceToGoal < 200 && inGoodPosition) shootChance = 0.35;
+        else if (distanceToGoal < 250 && inGoodPosition) shootChance = 0.2;
+        
+        shootChance *= this.config.shootAccuracy;
+
+        if (goodDistance && Math.random() < shootChance) {
+            // Apuntar a la portería con variación
+            const targetY = goalCenterY + (Math.random() - 0.5) * 60;
             player.shoot(theirGoalX, targetY, ball);
             return;
         }
-        
-        // Evaluar pase
+
+        // Evaluar pase - buscar mejor opción
         const bestTarget = this.team.findBestPassTarget(player);
-        if (bestTarget && Math.random() < this.config.passAccuracy) {
-            player.pass(bestTarget, ball);
+        if (bestTarget) {
+            const passChance = this.config.passAccuracy * 0.9;
+            if (Math.random() < passChance) {
+                player.pass(bestTarget, ball);
+                return;
+            }
         }
+        
+        // Si no hay pase disponible, driblar hacia adelante
+        player.vx += this.direction * this.config.maxSpeed * 0.5;
     }
 
     defendPosition(player, ball) {
