@@ -212,11 +212,11 @@ class AndroidControls {
         const player = this.game.homeTeam.controlledPlayer;
         if (!player || !player.hasBall) return;
         
-        // Disparar hacia la portería
+        // Shoot towards the goal
         const targetX = this.game.homeTeam.side === 'home' ? 1200 : 0;
         const targetY = 350;
         
-        // Añadir偏差 basado en joystick
+        // Add offset based on joystick position
         const targetYWithOffset = targetY + (this.joystick.dy * 50);
         
         player.shoot(targetX, targetYWithOffset, this.game.ball);

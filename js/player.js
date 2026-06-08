@@ -194,7 +194,7 @@ class Player {
         // Añadir efecto visual
         this.addEffect('burst');
         
-        window.audioManager.playSound('kick');
+        window.audioManager?.playSound('kick');
     }
 
     tackle() {
@@ -410,7 +410,7 @@ class Player {
             
             switch (effect.type) {
                 case 'burst':
-                    // Efecto de sprint
+                    // Sprint effect
                     ctx.beginPath();
                     ctx.arc(this.x, this.y + bobAmount, this.radius + 10 * (1 - alpha), 0, Math.PI * 2);
                     ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
@@ -419,12 +419,31 @@ class Player {
                     break;
                     
                 case 'shoot':
-                    // Línea de tiro
+                    // Shot line
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y + bobAmount);
                     ctx.lineTo(this.x + this.direction * 50 * (1 - alpha), this.y + bobAmount);
                     ctx.strokeStyle = `rgba(249, 199, 79, ${alpha})`;
                     ctx.lineWidth = 3;
+                    ctx.stroke();
+                    break;
+                    
+                case 'tackle':
+                    // Tackle slide effect
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + bobAmount, this.radius + 5 * (1 - alpha), 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(230, 57, 70, ${alpha * 0.6})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    break;
+                    
+                case 'pass':
+                case 'lob':
+                    // Pass/lob arc effect
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + bobAmount - 10, 15 * (1 - alpha), 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(74, 222, 128, ${alpha * 0.5})`;
+                    ctx.lineWidth = 2;
                     ctx.stroke();
                     break;
             }

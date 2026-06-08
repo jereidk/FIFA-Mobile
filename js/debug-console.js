@@ -295,14 +295,8 @@ class DebugConsole {
 window.debugConsole = new DebugConsole();
 
 // Also expose a simple global log function
+const _originalConsoleLog = console.log.bind(console);
 window.log = (...args) => {
     const [message, type, source] = args;
     window.debugConsole.log(message, type || 'info', source || 'Game');
 };
-
-console.log = (...args) => {
-    window.debugConsole.log(args.join(' '), 'debug', 'Console');
-    return originalConsoleLog.apply(console, args);
-};
-
-const originalConsoleLog = console.log.bind(console);

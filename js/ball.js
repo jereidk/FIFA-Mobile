@@ -121,11 +121,11 @@ class Ball {
     }
 
     updateHeight(dt) {
-        // Suavizar transición de altura
+        // Smooth height transition
         const heightDiff = this.targetHeight - this.height;
         this.height += heightDiff * 0.2 * dt;
         
-        //掉Si está muy bajo, marcar como en suelo
+        // If it's very low, mark as on ground
         if (this.height < 1) {
             this.height = 0;
             this.isAirborne = false;
