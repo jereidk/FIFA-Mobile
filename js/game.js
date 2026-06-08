@@ -280,6 +280,7 @@ class Game {
     resetMatch() {
         this.timeRemaining = this.matchDuration;
         this.currentHalf = 1;
+        this.goalProtectionTime = 0;
         this.homeTeam.resetScore();
         this.homeTeam.resetPositions();
         this.awayTeam.resetScore();
@@ -510,6 +511,7 @@ class Game {
             this.ball.reset();
             const player = scorer === 'home' ? this.awayTeam.players[9] : this.homeTeam.controlledPlayer;
             if (player) this.ball.assignTo(player);
+            this.goalProtectionTime = this.goalProtectionDuration; // Proteger después de gol
         }, 2000);
     }
 
