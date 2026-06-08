@@ -341,10 +341,17 @@ class Game {
     startGameLoop() {
         const loop = (timestamp) => {
             try {
-                const deltaTime = timestamp - this.lastTime;
+                // Skip first frame to avoid NaN deltaTime
+                if (this.lastTime === 0) {
+                    this.lastTime = timestamp;
+                    requestAnimationFrame(loop);
+                    return;
+                }
+
+                const deltaTime = Math.min(timestamp - this.lastTime, 100); // Cap at 100ms
                 this.lastTime = timestamp;
                 this.gameTime = timestamp;
-                
+
                 this.frameCount++;
                 if (timestamp - this.lastFpsUpdate > 1000) {
                     this.fps = this.frameCount;
@@ -352,13 +359,19 @@ class Game {
                     this.lastFpsUpdate = timestamp;
                     if (this.ui.fpsCounter) this.ui.fpsCounter.textContent = this.fps + ' FPS';
                 }
-                
+
                 this.update(deltaTime);
                 this.render();
             } catch (error) {
                 window.debugConsole.error('Game loop error', error.message, error.stack);
+                console.error('Game loop error:', error);
             }
-            
+
+            requestAnimationFrame(loop);
+        };
+
+        requestAnimationFrame(loop);
+    }
             requestAnimationFrame(loop);
         };
         

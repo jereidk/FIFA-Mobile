@@ -291,12 +291,43 @@ class DebugConsole {
     }
 }
 
+// Save original console methods BEFORE creating the instance
+const _originalLog = console.log.bind(console);
+const _originalInfo = console.info.bind(console);
+const _originalWarn = console.warn.bind(console);
+const _originalError = console.error.bind(console);
+const _originalDebug = console.debug.bind(console);
+
 // Create global instance
 window.debugConsole = new DebugConsole();
 
-// Also expose a simple global log function
-const _originalConsoleLog = console.log.bind(console);
-window.log = (...args) => {
-    const [message, type, source] = args;
-    window.debugConsole.log(message, type || 'info', source || 'Game');
+// Override console methods to capture all logs
+console.log = (...args) => {
+    window.debugConsole?.log(args.join(' '), 'info', 'console');
+    _originalLog(...args);
+};
+
+console.info = (...args) => {
+    window.debugConsole?.log(args.join(' '), 'info', 'console');
+    _originalInfo(...args);
+};
+
+console.warn = (...args) => {
+    window.debugConsole?.log(args.join(' '), 'warning', 'console');
+    _originalWarn(...args);
+};
+
+console.error = (...args) => {
+    window.debugConsole?.log(args.join(' '), 'error', 'console');
+    _originalError(...args);
+};
+
+console.debug = (...args) => {
+    window.debugConsole?.log(args.join(' '), 'debug', 'console');
+    _originalDebug(...args);
+};
+
+// Expose simple global log function
+window.log = (message, type = 'info', source = 'Game') => {
+    window.debugConsole?.log(message, type, source);
 };
