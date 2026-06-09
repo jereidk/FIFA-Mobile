@@ -172,9 +172,11 @@ body {
     pointer-events: none;
     z-index: 50;
     opacity: 0.95;
+    display: none;
 }
 
 #android-controls.active {
+    display: block;
     pointer-events: all;
 }
 
@@ -561,9 +563,11 @@ body {
     transform: translate(-50%, -50%);
     z-index: 200;
     pointer-events: none;
+    display: none;
 }
 
 #event-notification.show {
+    display: block;
     animation: eventPop 2s ease forwards;
 }
 
