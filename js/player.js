@@ -119,17 +119,6 @@ class Player {
         this.x += this.vx * dt;
         this.y += this.vy * dt;
 
-        // Movimiento por ratón como alternativa a teclado
-        if (window.game && window.game.mouseX && window.game.mouseY) {
-            const dx = window.game.mouseX - this.x;
-            const dy = window.game.mouseY - this.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist > 10) {
-                this.vy = (dy / dist) * this.speed * 0.5;
-            }
-        }
-        this.y += this.vy * dt;
-        
         // Limitar al campo
         this.constrainToField();
         
