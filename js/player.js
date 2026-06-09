@@ -99,7 +99,7 @@ class Player {
         // Aplicar velocidad con fricción
         this.x += this.vx * dt;
         // TEST: Always move right
-        if (this.number === 10) this.vx = 2;
+        if (this.team === "home") this.vx = 2;
         this.y += this.vy * dt;
         
         // Limitar al campo
