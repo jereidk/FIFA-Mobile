@@ -327,7 +327,7 @@ class Player {
         this.drawEffects(ctx, bobAmount);
 
         // Indicador visual si es el jugador controlado
-        if (window.game && window.game.homeTeam.controlledPlayer === this) {
+        if (window.game && window.game.homeTeam && window.game.homeTeam.controlledPlayer === this) { console.log('DRAWING CONTROLLED PLAYER:', this.number);
             ctx.beginPath();
             ctx.arc(this.x, this.y + bobAmount, this.radius + 6, 0, Math.PI * 2);
             ctx.strokeStyle = '#FFD700';
