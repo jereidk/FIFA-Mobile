@@ -95,6 +95,25 @@ class Player {
         if (keys && Object.keys(keys).length > 0) {
             this.handlePlayerInput(keys, ball, dt);
         }
+
+        // Movimiento por objetivo (mouse click control)
+        if (this.targetX !== undefined && this.targetX !== null &&
+            this.targetY !== undefined && this.targetY !== null) {
+            const dx = this.targetX - this.x;
+            const dy = this.targetY - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 5) {
+                this.vx = (dx / dist) * this.speed;
+                this.vy = (dy / dist) * this.speed;
+                if (dx !== 0) this.direction = dx > 0 ? 1 : -1;
+            } else {
+                // Clear target when reached
+                this.targetX = null;
+                this.targetY = null;
+                this.vx *= 0.5;
+                this.vy *= 0.5;
+            }
+        }
         
         // Aplicar velocidad con fricción
         this.x += this.vx * dt;

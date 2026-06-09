@@ -27,7 +27,6 @@ class Game {
         // Goal protection anti-false-detection
         this.goalProtectionTime = 0;
             
-            // Equipos
             window.debugConsole.log('Creating teams...', 'info');
             this.homeTeam = new Team('home', true);
             this.awayTeam = new Team('away', false);
@@ -175,6 +174,17 @@ class Game {
                         if (player.shoot(this.mouseX, this.mouseY, this.ball)) {
                             this.showAction('¡DISPARO!');
                             this.stats.home.shots++;
+                        }
+                    } else if (player) {
+                        // Move controlled player toward mouse position
+                        const dx = this.mouseX - player.x;
+                        const dy = this.mouseY - player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > 5) {
+                            const speed = 3;
+                            player.targetX = this.mouseX;
+                            player.targetY = this.mouseY;
+                            window.debugConsole.log(`Moving player to (${Math.round(this.mouseX)}, ${Math.round(this.mouseY)})`, 'info');
                         }
                     }
                 }
