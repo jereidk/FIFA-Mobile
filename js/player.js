@@ -160,6 +160,11 @@ class Player {
     handlePlayerInput(keys, ball, dt) {
         this.vx = 0;
         this.vy = 0;
+        // TEST: Auto-move right if no keys pressed (to test if game is working)
+        const keysPressed = keys["KeyW"] || keys["KeyA"] || keys["KeyS"] || keys["KeyD"] || keys["ArrowUp"] || keys["ArrowDown"] || keys["ArrowLeft"] || keys["ArrowRight"];
+        if (!keysPressed) {
+            this.vx = this.speed * 0.5; // Move right automatically as test
+        }
         
         // Movimiento
         if (keys['KeyW'] || keys['ArrowUp']) this.vy = -this.speed;
