@@ -147,6 +147,7 @@ class Team {
         if (this.isPlayerControlled && this.players.length > 2) {
             // Buscar un mediocampista o delantero
             const attackers = this.players.filter(p => ['ST', 'LW', 'RW', 'CAM'].includes(p.role));
+            console.log('HOME TEAM: isPlayerControlled=', this.isPlayerControlled, 'players=', this.players.length, 'attackers=', attackers.length);
             this.controlledPlayer = attackers.length > 0 ? attackers[0] : this.players[8];
         }
     }
