@@ -391,6 +391,12 @@ class Game {
     }
 
     update(deltaTime) {
+        // DEBUG: Log game state every 120 frames
+        if (!window._gameDebugFrame) window._gameDebugFrame = 0;
+        window._gameDebugFrame++;
+        if (window._gameDebugFrame % 120 === 0) {
+            console.log(`[Game] state=${this.currentState}, PLAYING=${this.STATE.PLAYING}, keys=${JSON.stringify(this.keys)}, controlledPlayer=${this.homeTeam.controlledPlayer ? this.homeTeam.controlledPlayer.number : "null"}`);
+        }
         if (this.currentState !== this.STATE.PLAYING) return;
         
         // Reduce goal protection timer
