@@ -167,24 +167,31 @@ class Game {
             });
 
             this.canvas.addEventListener('mousedown', (e) => {
+                const rect = this.canvas.getBoundingClientRect();
+                const clickX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const clickY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                
+                window.debugConsole.log(`Mouse click at (${Math.round(clickX)}, ${Math.round(clickY)}) state: ${this.currentState}`, 'info');
+                
                 if (this.currentState === this.STATE.PLAYING) {
                     this.isMouseDown = true;
                     const player = this.homeTeam.controlledPlayer;
+                    window.debugConsole.log(`Controlled player: ${player ? player.number : 'none'} at (${player ? Math.round(player.x) : '?'}, ${player ? Math.round(player.y) : '?'})`, 'info');
+                    
                     if (player && player.hasBall) {
-                        if (player.shoot(this.mouseX, this.mouseY, this.ball)) {
+                        if (player.shoot(clickX, clickY, this.ball)) {
                             this.showAction('¡DISPARO!');
                             this.stats.home.shots++;
                         }
                     } else if (player) {
                         // Move controlled player toward mouse position
-                        const dx = this.mouseX - player.x;
-                        const dy = this.mouseY - player.y;
+                        const dx = clickX - player.x;
+                        const dy = clickY - player.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist > 5) {
-                            const speed = 3;
-                            player.targetX = this.mouseX;
-                            player.targetY = this.mouseY;
-                            window.debugConsole.log(`Moving player to (${Math.round(this.mouseX)}, ${Math.round(this.mouseY)})`, 'info');
+                            player.targetX = clickX;
+                            player.targetY = clickY;
+                            window.debugConsole.log(`Moving player to (${Math.round(clickX)}, ${Math.round(clickY)}) distance: ${Math.round(dist)}`, 'info');
                         }
                     }
                 }
