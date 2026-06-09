@@ -84,12 +84,6 @@ class Player {
 
     update(ball, keys, deltaTime = 1) {
         const dt = deltaTime / 16.67;
-        // DEBUG: Log player state every 60 frames
-        if (!window._debugFrame) window._debugFrame = 0;
-        window._debugFrame++;
-        if (window._debugFrame % 60 === 0) {
-            console.log(`[Player ${this.number}] hasBall=${this.hasBall}, keysCount=${keys ? Object.keys(keys).length : "null"}, vx=${this.vx.toFixed(2)}, vy=${this.vy.toFixed(2)}`);
-        }
         
         // Actualizar cooldowns
         this.updateCooldowns(dt);
@@ -160,11 +154,6 @@ class Player {
     handlePlayerInput(keys, ball, dt) {
         this.vx = 0;
         this.vy = 0;
-        // TEST: Auto-move right if no keys pressed (to test if game is working)
-        const keysPressed = keys["KeyW"] || keys["KeyA"] || keys["KeyS"] || keys["KeyD"] || keys["ArrowUp"] || keys["ArrowDown"] || keys["ArrowLeft"] || keys["ArrowRight"];
-        if (!keysPressed) {
-            this.vx = this.speed * 0.5; // Move right automatically as test
-        }
         
         // Movimiento
         if (keys['KeyW'] || keys['ArrowUp']) this.vy = -this.speed;
