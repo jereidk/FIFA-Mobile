@@ -91,8 +91,8 @@ class Player {
         // Manejar stamina
         this.updateStamina(dt, keys);
         
-        // Movimiento basado en teclas
-        if (this.hasBall) {
+        // Movimiento basado en teclas (siempre funciona, no solo con balón)
+        if (keys && Object.keys(keys).length > 0) {
             this.handlePlayerInput(keys, ball, dt);
         }
         

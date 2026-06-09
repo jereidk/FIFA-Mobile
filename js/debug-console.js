@@ -144,7 +144,7 @@ class DebugConsole {
     toggle() {
         this.isVisible = !this.isVisible;
         this.container.classList.toggle('visible', this.isVisible);
-        this.toggleBtn.style.display = this.isVisible ? 'none' : 'block';
+        this.toggleBtn.style.display = 'block';
         
         if (this.isVisible) {
             this.container.classList.remove('minimized');
