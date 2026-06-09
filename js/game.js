@@ -116,6 +116,7 @@ class Game {
             // Keyboard
             document.addEventListener('keydown', (e) => {
                 this.keys[e.code] = true;
+                console.log('KEYDOWN:', e.code, 'keys:', JSON.stringify(this.keys));
                 
                 if (this.currentState === this.STATE.PLAYING) {
                     const player = this.homeTeam.controlledPlayer;
@@ -416,6 +417,7 @@ class Game {
         this.homeTeam.players.forEach(player => {
             if (player === this.homeTeam.controlledPlayer) {
                 player.update(this.ball, this.keys, deltaTime);
+                    console.log('UPDATE CONTROLLED: keys=', JSON.stringify(this.keys));
             } else {
                 player.update(this.ball, {}, deltaTime);
             }
