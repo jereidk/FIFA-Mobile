@@ -90,7 +90,6 @@ class Game {
             // Ratón para control
             this.mouseX = null;
             this.mouseY = null;
-            };
             
             // Event notification
             this.eventNotification = document.getElementById('event-notification');
