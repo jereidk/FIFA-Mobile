@@ -86,6 +86,11 @@ class Game {
                 end: document.getElementById('end-screen'),
                 instructions: document.getElementById('instructions-screen')
             };
+
+            // Ratón para control
+            this.mouseX = null;
+            this.mouseY = null;
+            };
             
             // Event notification
             this.eventNotification = document.getElementById('event-notification');

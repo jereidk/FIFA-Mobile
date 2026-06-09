@@ -99,6 +99,17 @@ class Player {
         // Aplicar velocidad con fricción
         this.x += this.vx * dt;
         this.y += this.vy * dt;
+
+        // Movimiento por ratón como alternativa a teclado
+        if (window.game && window.game.mouseX && window.game.mouseY) {
+            const dx = window.game.mouseX - this.x;
+            const dy = window.game.mouseY - this.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 10) {
+                this.vy = (dy / dist) * this.speed * 0.5;
+            }
+        }
+        this.y += this.vy * dt;
         
         // Limitar al campo
         this.constrainToField();
@@ -312,9 +323,17 @@ class Player {
         ctx.ellipse(this.x, this.y + this.radius + 2, this.radius * 0.9, this.radius * 0.4, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
         ctx.fill();
-        
         // Dibujar efectos
         this.drawEffects(ctx, bobAmount);
+
+        // Indicador visual si es el jugador controlado
+        if (window.game && window.game.homeTeam.controlledPlayer === this) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y + bobAmount, this.radius + 6, 0, Math.PI * 2);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
         
         // Cuerpo (círculo)
         ctx.beginPath();
